@@ -1,35 +1,71 @@
-import { Client, Users } from 'node-appwrite';
+import { Client, Databases, Query } from "node-appwrite";
 
-// This Appwrite function will be executed every time your function is triggered
 export default async ({ req, res, log, error }) => {
-  // You can use the Appwrite SDK to interact with other services
-  // For this example, we're using the Users service
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT)
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
-    .setKey(req.headers['x-appwrite-key'] ?? '');
-  const users = new Users(client);
+    .setKey(process.env.APPWRITE_FUNCTION_API_KEY);
+
+  const databases = new Databases(client);
 
   try {
-    const response = await users.list();
-    // Log messages and errors to the Appwrite Console
-    // These logs won't be seen by your end users
-    log(`Total users: ${response.total}`);
-  } catch(err) {
-    error("Could not list users: " + err.message);
-  }
+    if (req.method !== "POST") {
+      return res.text("Invalid method", 405);
+    }
 
-  // The req object contains the request data
-  if (req.path === "/ping") {
-    // Use res object to respond with text(), json(), or binary()
-    // Don't forget to return a response!
-    return res.text("Pong");
-  }
+    const body = JSON.parse(req.body);
+    const action = body.action;
+    const pr = body.pull_request;
 
-  return res.json({
-    motto: "Build like a team of hundreds_",
-    learn: "https://appwrite.io/docs",
-    connect: "https://appwrite.io/discord",
-    getInspired: "https://builtwith.appwrite.io",
-  });
+    // Only act on merged PRs
+    if (action !== "closed" || !pr.merged) {
+      return res.text("Not a merged PR, skipping...");
+    }
+
+    const repoName = body.repository.full_name;
+    const prId = pr.id;
+    const prTitle = pr.title;
+    const author = pr.user.login;
+
+    // Check if PR already exists or completed
+    const existing = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID,
+      process.env.APPWRITE_COLLECTION_ID,
+      [Query.equal("prId", prId)]
+    );
+
+    if (existing.total > 0 && existing.documents[0].status === "completed") {
+      log(`PR #${prId} already completed. Skipping update.`);
+      return res.text("Already completed");
+    }
+
+    // Store or update PR in Appwrite
+    if (existing.total === 0) {
+      await databases.createDocument(
+        process.env.APPWRITE_DATABASE_ID,
+        process.env.APPWRITE_COLLECTION_ID,
+        "unique()",
+        {
+          prId,
+          repoName,
+          prTitle,
+          author,
+          status: "completed",
+          mergedAt: pr.merged_at,
+        }
+      );
+    } else {
+      await databases.updateDocument(
+        process.env.APPWRITE_DATABASE_ID,
+        process.env.APPWRITE_COLLECTION_ID,
+        existing.documents[0].$id,
+        { status: "completed", mergedAt: pr.merged_at }
+      );
+    }
+
+    return res.json({ success: true, message: "PR recorded successfully" });
+  } catch (err) {
+    error("Error handling PR webhook: " + err.message);
+    return res.json({ success: false, error: err.message });
+  }
 };
