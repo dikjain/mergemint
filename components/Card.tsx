@@ -24,15 +24,7 @@ interface CardProps {
   className?: string;
 }
 
-/**
- * Reusable Card component with configurable dimensions
- * Features a double-border design with an outer white container and inner neutral background
- * 
- * @param height - Height of the card (default: '2/5')
- * @param width - Width of the card (default: 'full')
- * @param children - Content to render inside the card
- * @param className - Additional CSS classes
- */
+
 export default function Card({ 
   height = 'h-full', 
   width = 'w-full', 
