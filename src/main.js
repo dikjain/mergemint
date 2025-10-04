@@ -17,7 +17,6 @@ export default async ({ req, res, log, error }) => {
     const action = body.action;
     const pr = body.pull_request;
 
-    // Only act on merged PRs
     if (action !== "closed" || !pr.merged) {
       return res.text("Not a merged PR, skipping...");
     }
