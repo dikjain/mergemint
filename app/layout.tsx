@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Nunito } from "next/font/google";
+import { Geist, Geist_Mono, Nunito, Exo_2 } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,6 +17,11 @@ const nunito = Nunito({
   subsets: ["latin"],
 });
 
+const exo2 = Exo_2({
+  variable: "--font-exo-2",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Mergemint",
   description: "Mergemint",
@@ -30,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} h-screen w-full antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${exo2.variable} h-screen w-full antialiased`}
       >
         {children}
       </body>

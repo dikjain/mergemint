@@ -1,3 +1,4 @@
 export default function CompanyPage() {
-  return <div>Company Page</div>;
+  return <div className="bg-white h-screen w-screen max-w-[1440px]">
+    Company Page</div>;
 }   

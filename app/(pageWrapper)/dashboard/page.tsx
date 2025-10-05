@@ -1,38 +1,27 @@
 'use client';
 
-/**
- * Dashboard Page Component
- * Displays user's merged PRs fetched from Supabase
- */
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../../../components/Sidebar';
 import Card from '../../../components/Card';
 import PRComponent from '../../../components/PRComponent';
-import { supabase } from '../../../lib/supabase';
-import type { PRRecord } from '../../../lib/supabase';
+import UserProfile from '../../../components/UserProfile';
+import { 
+  getCurrentSession, 
+  logout, 
+  onAuthStateChange, 
+  fetchUserPRs,
+  type User,
+  type UserDetails,
+  type PRRecord,
+  type AuthSession
+} from '../../../api/apiExporter';
 
-/**
- * Type definition for authenticated user
- */
-type User = {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    avatar_url?: string;
-    full_name?: string;
-    user_name?: string;
-  };
-};
 
-/**
- * Dashboard page component
- * Main dashboard with sidebar navigation and real-time PR data
- */
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [prs, setPrs] = useState<PRRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,27 +29,28 @@ export default function Dashboard() {
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
-        const { data: { session }, error: authError } = await supabase.auth.getSession();
+        const sessionResult = await getCurrentSession();
         
-        if (authError || !session) {
+        if (!sessionResult.success || !sessionResult.data) {
           console.log('No active session, redirecting to login...');
           router.push('/');
           return;
         }
 
-        setUser(session.user as User);
+        setUser(sessionResult.data.user);
 
-        // Fetch user's PRs ordered by most recent
-        const { data: prsData, error: prsError } = await supabase
-          .from('prs')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false });
+        const userDetailsData = sessionResult.data.userDetails;
+        setUserDetails(userDetailsData);
 
-        if (prsError) {
-          console.error('Error fetching PRs:', prsError);
+        const prsResult = await fetchUserPRs(sessionResult.data.user.id, {
+          orderBy: 'created_at',
+          ascending: false
+        });
+
+        if (!prsResult.success) {
+          console.error('Error fetching PRs:', prsResult.error);
         } else {
-          setPrs(prsData || []);
+          setPrs(prsResult.data || []);
         }
       } catch (error) {
         console.error('Error initializing dashboard:', error);
@@ -71,33 +61,21 @@ export default function Dashboard() {
 
     initializeDashboard();
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const unsubscribe = onAuthStateChange((session: AuthSession | null) => {
       if (!session) {
         router.push('/');
       } else {
-        setUser(session.user as User);
+        setUser(session.user);
+        setUserDetails(session.userDetails);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return unsubscribe;
   }, [router]);
 
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-  };
 
 
-  const getDisplayName = () => {
-    return user?.user_metadata?.full_name || 
-           user?.user_metadata?.user_name || 
-           user?.email || 
-           'User';
-  };
-
-  // Loading state
   if (loading) {
     return (
       <div className="h-screen bg-white flex items-center justify-center">
@@ -109,32 +87,16 @@ export default function Dashboard() {
     );
   }
 
-  const displayName = getDisplayName();
-  const avatarUrl = user?.user_metadata?.avatar_url;
-
   return (
     <div className="h-screen bg-white flex w-screen max-w-[1440px]">
       <Sidebar />
 
       <section className="w-full h-full bg-white px-8 py-8 flex flex-col gap-4 border-r border-neutral-200">
-        {/* User Profile Header */}
-        <div className='ml-auto border border-neutral-200 rounded-lg p-1 flex items-center gap-2 text-neutral-500'>
-          {avatarUrl ? (
-            <img 
-              src={avatarUrl} 
-              alt="User avatar" 
-              className='w-6 h-6 rounded-full object-cover'
-            />
-          ) : (
-            <div className='w-6 h-6 bg-black/20 rounded-full' />
-          )}
-          <span className="text-sm">{displayName}</span>
-          <button 
-            onClick={handleLogout}
-            className="ml-2 text-xs text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors"
-          >
-            Logout
-          </button>
+
+
+        <div className='flex items-center justify-between'>
+          <h1 className="text-3xl font-bold text-neutral-600 font-exo-2">Dashboard</h1>
+          <UserProfile user={user} userDetails={userDetails} />
         </div>
 
         {/* Stats Card Placeholder */}
@@ -143,7 +105,9 @@ export default function Dashboard() {
         </Card>
 
         {/* PRs Section */}
-        <h1 className='text-xl font-bold text-neutral-600'>My PRs</h1>
+        
+        <h1 className='text-xl font-bold text-neutral-600 font-nunito'>My PRs</h1>
+  
 
         <div className="flex flex-col overflow-y-auto">
           {prs.length === 0 ? (
