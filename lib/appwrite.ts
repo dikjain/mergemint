@@ -1,10 +1,17 @@
-import { Client, Account, Databases } from "appwrite";
+/**
+ * COMMENTED OUT - MIGRATED TO SUPABASE
+ * See lib/supabase.ts for new configuration
+ */
 
-const client = new Client()
-  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
+// import { Client, Account, Databases } from "appwrite";
 
-const account = new Account(client);
-const databases = new Databases(client);
+// const client = new Client()
+//   .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+//   .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
 
-export { client, account, databases };
+// const account = new Account(client);
+// const databases = new Databases(client);
+
+// export { client, account, databases };
+
+export {}; // Keep file valid TypeScript
