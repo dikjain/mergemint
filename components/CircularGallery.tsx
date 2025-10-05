@@ -3,6 +3,7 @@
 
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl';
 import { useEffect, useRef } from 'react';
+import { defaultItems } from '@/app/store/store';
 
 type GL = Renderer['gl'];
 
@@ -500,41 +501,7 @@ class App {
     borderRadius: number,
     font: string
   ) {
-    // Default NFT monkey collection for gallery display
-    const defaultItems = [
-      {
-        image: `https://wallpapers.com/images/high/nft-monkey-441q73yzqpw8o6y5.webp`,
-        text: 'Golden Ape'
-      },
-      {
-        image: `https://wallpapers.com/images/high/nft-monkey-r237cp3zh1bj5ivs.webp`,
-        text: 'Rare Ape'
-      },
-      {
-        image: `https://wallpapers.com/images/high/nft-monkey-piax0vgvrmnr3tss.webp`,
-        text: 'Digital Primate'
-      },
-      {
-        image: `https://wallpapers.com/images/high/nft-monkey-pg4k4qtmfem0qlho.webp`,
-        text: 'Pixel Monkey'
-      },
-      {
-        image: `https://wallpapers.com/images/high/nft-monkey-fdm9t6g8p3h4nj7n.webp`,
-        text: 'Neon Ape'
-      },
-      {
-        image: `https://wallpapers.com/images/high/nft-monkey-j0rpoqvt1zl8z03g.webp`,
-        text: 'Elite Monkey'
-      },
-      {
-        image: `https://wallpapers.com/images/high/nft-monkey-cqcs8keyywd67e84.webp`,
-        text: 'Chrome Ape'
-      },
-      {
-        image: `https://wallpapers.com/images/high/nft-monkey-2gqnsrs1nnyi66m2.webp`,
-        text: 'Legendary Primate'
-      }
-    ];
+
     const galleryItems = items && items.length ? items : defaultItems;
     this.mediasImages = galleryItems.concat(galleryItems);
     this.medias = this.mediasImages.map((data, index) => {

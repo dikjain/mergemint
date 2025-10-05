@@ -1,7 +1,5 @@
 'use client';
 
-
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginWithGitHub, getCurrentSession, onAuthStateChange } from '../api/apiExporter';
@@ -12,22 +10,24 @@ const Login = () => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  useEffect(() => {
-    const checkAuthState = async () => {
-      try {
-        const sessionResult = await getCurrentSession();
-        
-        if (sessionResult.success && sessionResult.data) {
-          router.push('/dashboard');
-          return;
-        }
-      } catch (error) {
-        console.error('Error checking auth state:', error);
-      } finally {
-        setLoading(false);
+  const checkAuthState = async () => {
+    try {
+      const sessionResult = await getCurrentSession();
+      
+      if (sessionResult.success && sessionResult.data) {
+        router.push('/dashboard');
+        return;
       }
-    };
+    } catch (error) {
+      console.error('Error checking auth state:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+
+  useEffect(() => {
+  
     checkAuthState();
 
     const unsubscribe = onAuthStateChange((session) => {
