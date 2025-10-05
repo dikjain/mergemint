@@ -16,6 +16,8 @@ import {
   type PRRecord,
   type AuthSession
 } from '../../../api/apiExporter';
+import RewardDisplay from '../../../components/rewardDisplay';
+import EmptyPrs from '../../../components/emptyPrs';
 
 
 export default function Dashboard() {
@@ -30,12 +32,15 @@ export default function Dashboard() {
     const initializeDashboard = async () => {
       try {
         const sessionResult = await getCurrentSession();
+
+        console.log('sessionResult', sessionResult);
         
         if (!sessionResult.success || !sessionResult.data) {
           console.log('No active session, redirecting to login...');
           router.push('/');
           return;
         }
+        console.log('sessionResult.data', sessionResult.data);
 
         setUser(sessionResult.data.user);
 
@@ -46,10 +51,12 @@ export default function Dashboard() {
           orderBy: 'created_at',
           ascending: false
         });
+        console.log('prsResult', prsResult);
 
         if (!prsResult.success) {
           console.error('Error fetching PRs:', prsResult.error);
         } else {
+          console.log('prsResult.data', prsResult.data);
           setPrs(prsResult.data || []);
         }
       } catch (error) {
@@ -99,9 +106,8 @@ export default function Dashboard() {
           <UserProfile user={user} userDetails={userDetails} />
         </div>
 
-        {/* Stats Card Placeholder */}
         <Card height="h-[40%]" width="w-full">  
-          {/* Add stats or charts here */}
+          <RewardDisplay reward={20 || 0} />
         </Card>
 
         {/* PRs Section */}
@@ -111,10 +117,9 @@ export default function Dashboard() {
 
         <div className="flex flex-col overflow-y-auto">
           {prs.length === 0 ? (
-            <div className="text-center py-12 text-neutral-500">
-              <p className="font-medium">No PRs found. Merge a PR to see it here!</p>
-              <p className="text-sm mt-2">Make sure your GitHub webhook is configured.</p>
-            </div>
+            <EmptyPrs />
+
+
           ) : (
             prs.map((pr) => (
               <PRComponent key={pr.id} pr={pr} />

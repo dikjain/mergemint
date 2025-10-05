@@ -1,9 +1,3 @@
-/**
- * PR Component
- * 
- * Displays a single pull request row with repository image, title,
- * repo name, PR number, and status badge.
- */
 
 import { 
   ClockIcon, 
@@ -11,16 +5,13 @@ import {
   XCircleIcon 
 } from '@heroicons/react/24/outline';
 import type { PRRecord } from '../lib/supabase';
+import type { MockPR } from '../lib/mockData';
 
+// Union type to support both database records and mock data
 interface PRComponentProps {
-  pr: PRRecord;
+  pr: PRRecord | MockPR;
 }
 
-/**
- * Get status styling and icon based on PR status
- * @param status - The status of the PR
- * @returns Object containing styling classes and icon component
- */
 const getStatusConfig = (status: string) => {
   switch (status.toLowerCase()) {
     case 'approved':
@@ -50,9 +41,18 @@ const getStatusConfig = (status: string) => {
 };
 
 /**
- * PRComponent - Renders a single PR item
+ * PRComponent - Renders a single PR item with all relevant information
+ * 
+ * Features:
+ * - Repository avatar with fallback to GitHub icon
+ * - Truncated PR title with full title on hover
+ * - Repository name display
+ * - PR number with # prefix
+ * - Status badge with appropriate icon and colors
+ * - Hover effects for better UX
  */
 export default function PRComponent({ pr }: PRComponentProps) {
+  // Get status configuration for styling and icon
   const statusConfig = getStatusConfig(pr.status);
   const StatusIcon = statusConfig.icon;
 
@@ -67,7 +67,7 @@ export default function PRComponent({ pr }: PRComponentProps) {
         />
       </div>
       
-      {/* PR Title */}
+      {/* PR Title - Truncated with full title on hover */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-neutral-800 truncate" title={pr.title}>
           {pr.title}
@@ -98,4 +98,3 @@ export default function PRComponent({ pr }: PRComponentProps) {
     </div>
   );
 }
-
