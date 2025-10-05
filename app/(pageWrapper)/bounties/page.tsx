@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Sidebar from '../../../components/Sidebar';
 import { fetchBounties, type Bounty } from '../../../api/apiExporter';
 import { formatReward, formatDate, getBountyStatusBadge } from '../../../utils';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {  Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import {  Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { logout } from '../api/apiExporter';
 import { 
   Dialog, 
@@ -11,7 +11,6 @@ import {
   DialogFooter, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger 
 } from './ui/dialog';
 
 const navigationItems = [
@@ -58,7 +57,7 @@ export default function Sidebar() {
     <div className="flex flex-col h-full max-w-[180px] py-8 px-6 gap-1 border-r border-neutral-300">
       {navigationItems.map((item, index) => (
         <h2 
-          key={item.label}
+          key={item.label + index}
           onClick={() => handleNavigation(item.route, item.label)}
           className={`text-md text-neutral-500 cursor-pointer text-nowrap font-semibold tracking-tight flex items-center gap-1 font-nunito hover:text-neutral-700 transition-colors ${
             item.hasBorder ? 'border-b border-neutral-300' : ''

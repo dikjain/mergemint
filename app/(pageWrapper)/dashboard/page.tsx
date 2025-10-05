@@ -8,7 +8,6 @@ import PRComponent from '../../../components/PRComponent';
 import UserProfile from '../../../components/UserProfile';
 import { 
   getCurrentSession, 
-  logout, 
   onAuthStateChange, 
   fetchUserPRs,
   type User,
