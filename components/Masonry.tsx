@@ -1,22 +1,40 @@
+"use client";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 
+/**
+ * Custom hook for responsive media queries
+ * Returns a value based on which media query matches
+ */
 const useMedia = (queries: string[], values: number[], defaultValue: number): number => {
-  const get = () => values[queries.findIndex(q => matchMedia(q).matches)] ?? defaultValue;
+  const get = () => {
+    if (typeof window === 'undefined') return defaultValue;
+    return values[queries.findIndex(q => window.matchMedia(q).matches)] ?? defaultValue;
+  };
 
   const [value, setValue] = useState<number>(get);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handler = () => setValue(get);
-    queries.forEach(q => matchMedia(q).addEventListener('change', handler));
-    return () => queries.forEach(q => matchMedia(q).removeEventListener('change', handler));
+    const mediaQueries = queries.map(q => window.matchMedia(q));
+    
+    mediaQueries.forEach(mq => mq.addEventListener('change', handler));
+    return () => mediaQueries.forEach(mq => mq.removeEventListener('change', handler));
   }, [queries]);
 
   return value;
 };
 
+/**
+ * Custom hook to measure element dimensions
+ * Uses ResizeObserver to track size changes
+ */
 const useMeasure = <T extends HTMLElement>() => {
   const ref = useRef<T | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -34,6 +52,10 @@ const useMeasure = <T extends HTMLElement>() => {
   return [ref, size] as const;
 };
 
+/**
+ * Preloads images to ensure smooth animations
+ * Returns a promise that resolves when all images are loaded
+ */
 const preloadImages = async (urls: string[]): Promise<void> => {
   await Promise.all(
     urls.map(
@@ -84,6 +106,7 @@ const Masonry: React.FC<MasonryProps> = ({
   blurToFocus = true,
   colorShiftOnHover = false
 }) => {
+  // Responsive column count based on screen width
   const columns = useMedia(
     ['(min-width:1500px)', '(min-width:1000px)', '(min-width:600px)', '(min-width:400px)'],
     [5, 4, 3, 2],
@@ -93,6 +116,9 @@ const Masonry: React.FC<MasonryProps> = ({
   const [containerRef, { width }] = useMeasure<HTMLDivElement>();
   const [imagesReady, setImagesReady] = useState(false);
 
+  /**
+   * Calculates initial position for animation based on animateFrom prop
+   */
   const getInitialPosition = (item: GridItem) => {
     const containerRect = containerRef.current?.getBoundingClientRect();
     if (!containerRect) return { x: item.x, y: item.y };
@@ -122,10 +148,15 @@ const Masonry: React.FC<MasonryProps> = ({
     }
   };
 
+  // Preload images when items change
   useEffect(() => {
     preloadImages(items.map(i => i.img)).then(() => setImagesReady(true));
   }, [items]);
 
+  /**
+   * Calculates masonry grid layout
+   * Distributes items across columns with optimal height distribution
+   */
   const grid = useMemo<GridItem[]>(() => {
     if (!width) return [];
     const colHeights = new Array(columns).fill(0);
@@ -146,6 +177,10 @@ const Masonry: React.FC<MasonryProps> = ({
 
   const hasMounted = useRef(false);
 
+  /**
+   * Handles GSAP animations for grid items
+   * Initial mount animations and layout updates
+   */
   useLayoutEffect(() => {
     if (!imagesReady) return;
 
@@ -154,6 +189,7 @@ const Masonry: React.FC<MasonryProps> = ({
       const animProps = { x: item.x, y: item.y, width: item.w, height: item.h };
 
       if (!hasMounted.current) {
+        // Initial mount animation
         const start = getInitialPosition(item);
         gsap.fromTo(
           selector,
@@ -175,6 +211,7 @@ const Masonry: React.FC<MasonryProps> = ({
           }
         );
       } else {
+        // Layout update animation
         gsap.to(selector, {
           ...animProps,
           duration,
@@ -187,6 +224,9 @@ const Masonry: React.FC<MasonryProps> = ({
     hasMounted.current = true;
   }, [grid, imagesReady, stagger, animateFrom, blurToFocus, duration, ease]);
 
+  /**
+   * Handles mouse enter animations
+   */
   const handleMouseEnter = (id: string, element: HTMLElement) => {
     if (scaleOnHover) {
       gsap.to(`[data-key="${id}"]`, {
@@ -201,6 +241,9 @@ const Masonry: React.FC<MasonryProps> = ({
     }
   };
 
+  /**
+   * Handles mouse leave animations
+   */
   const handleMouseLeave = (id: string, element: HTMLElement) => {
     if (scaleOnHover) {
       gsap.to(`[data-key="${id}"]`, {
