@@ -7,6 +7,7 @@ export default function RewardDisplay({ reward }: { reward: number }) {
   return (
     <div style={{ boxShadow: 'inset 0 0 6px 0 rgba(0, 0, 0, 0.1)' }} className='flex flex-col w-full relative bg-neutral-50 rounded-md h-full overflow-hidden'>
       
+      
       {/* Progress Bar with Milestones */}
       <div className='absolute bottom-6 left-1/2 -translate-x-1/2 w-[85%] z-20'>
         <div className='relative h-2 bg-gray-200 rounded-full '>
