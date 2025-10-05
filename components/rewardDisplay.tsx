@@ -4,6 +4,7 @@ import CircularGallery from "./CircularGallery";
 export default function RewardDisplay({ reward }: { reward: number }) {
   const milestones = [0, 16.67, 33.33, 50, 66.67, 83.33, 100];
   
+  
   return (
     <div style={{ boxShadow: 'inset 0 0 6px 0 rgba(0, 0, 0, 0.1)' }} className='flex flex-col w-full relative bg-neutral-50 rounded-md h-full overflow-hidden'>
       
