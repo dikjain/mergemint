@@ -107,7 +107,7 @@ export default function Dashboard() {
         </div>
 
         <Card height="h-[40%]" width="w-full">  
-          <RewardDisplay reward={20 || 0} />
+          <RewardDisplay reward={(userDetails?.ipr_count || 0) * 4 || 0} />
         </Card>
 
         {/* PRs Section */}
