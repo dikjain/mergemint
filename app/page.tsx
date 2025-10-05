@@ -15,7 +15,6 @@ const Login = () => {
   useEffect(() => {
     const checkAuthState = async () => {
       try {
-        // Check if user is already authenticated
         const sessionResult = await getCurrentSession();
         
         if (sessionResult.success && sessionResult.data) {

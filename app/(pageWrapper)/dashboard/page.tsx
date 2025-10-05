@@ -7,13 +7,11 @@ import Card from '../../../components/Card';
 import PRComponent from '../../../components/PRComponent';
 import UserProfile from '../../../components/UserProfile';
 import { 
-  getCurrentSession, 
-  onAuthStateChange, 
+  getCurrentSession,
   fetchUserPRs,
   type User,
   type UserDetails,
-  type PRRecord,
-  type AuthSession
+  type PRRecord
 } from '../../../api/apiExporter';
 import RewardDisplay from '../../../components/rewardDisplay';
 import EmptyPrs from '../../../components/emptyPrs';
@@ -26,57 +24,40 @@ export default function Dashboard() {
   const [prs, setPrs] = useState<PRRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-
   useEffect(() => {
-    const initializeDashboard = async () => {
+    const initDashboard = async () => {
       try {
+        // Check if session exists
         const sessionResult = await getCurrentSession();
-
-        console.log('sessionResult', sessionResult);
         
         if (!sessionResult.success || !sessionResult.data) {
-          console.log('No active session, redirecting to login...');
+          // No session, redirect to landing page
           router.push('/');
           return;
         }
-        console.log('sessionResult.data', sessionResult.data);
 
+        // Session exists, load user data
         setUser(sessionResult.data.user);
+        setUserDetails(sessionResult.data.userDetails);
 
-        const userDetailsData = sessionResult.data.userDetails;
-        setUserDetails(userDetailsData);
-
+        // Fetch user PRs
         const prsResult = await fetchUserPRs(sessionResult.data.user.id, {
           orderBy: 'created_at',
           ascending: false
         });
-        console.log('prsResult', prsResult);
 
-        if (!prsResult.success) {
-          console.error('Error fetching PRs:', prsResult.error);
-        } else {
-          console.log('prsResult.data', prsResult.data);
+        if (prsResult.success) {
           setPrs(prsResult.data || []);
         }
       } catch (error) {
-        console.error('Error initializing dashboard:', error);
+        console.error('Dashboard initialization error:', error);
+        router.push('/');
       } finally {
         setLoading(false);
       }
     };
 
-    initializeDashboard();
-
-    const unsubscribe = onAuthStateChange((session: AuthSession | null) => {
-      if (!session) {
-        router.push('/');
-      } else {
-        setUser(session.user);
-        setUserDetails(session.userDetails);
-      }
-    });
-
-    return unsubscribe;
+    initDashboard();
   }, [router]);
 
 
