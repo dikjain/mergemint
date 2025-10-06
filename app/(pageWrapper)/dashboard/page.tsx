@@ -6,16 +6,15 @@ import Sidebar from '../../../components/Sidebar';
 import Card from '../../../components/Card';
 import PRComponent from '../../../components/PRComponent';
 import UserProfile from '../../../components/UserProfile';
-import { 
+import {
   getCurrentSession,
   fetchUserPRs,
   type User,
   type UserDetails,
-  type PRRecord
+  type PRRecord,
 } from '../../../api/apiExporter';
 import RewardDisplay from '../../../components/rewardDisplay';
 import EmptyPrs from '../../../components/emptyPrs';
-
 
 export default function Dashboard() {
   const router = useRouter();
@@ -29,7 +28,7 @@ export default function Dashboard() {
       try {
         // Check if session exists
         const sessionResult = await getCurrentSession();
-        
+
         if (!sessionResult.success || !sessionResult.data) {
           // No session, redirect to landing page
           router.push('/');
@@ -43,7 +42,7 @@ export default function Dashboard() {
         // Fetch user PRs
         const prsResult = await fetchUserPRs(sessionResult.data.user.id, {
           orderBy: 'created_at',
-          ascending: false
+          ascending: false,
         });
 
         if (prsResult.success) {
@@ -59,9 +58,6 @@ export default function Dashboard() {
 
     initDashboard();
   }, [router]);
-
-
-
 
   if (loading) {
     return (
@@ -79,31 +75,26 @@ export default function Dashboard() {
       <Sidebar />
 
       <section className="w-full h-full bg-white px-8 py-8 flex flex-col gap-4 border-r border-neutral-200">
-
-
-        <div className='flex items-center justify-between'>
-          <h1 className="text-3xl font-bold text-neutral-600 font-exo-2">Dashboard</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-neutral-600 font-exo-2">
+            Dashboard
+          </h1>
           <UserProfile user={user} userDetails={userDetails} />
         </div>
 
-        <Card height="h-[40%]" width="w-full">  
+        <Card height="h-[40%]" width="w-full">
           <RewardDisplay reward={(userDetails?.ipr_count || 0) * 4 || 0} />
         </Card>
 
-        {/* PRs Section */}
-        
-        <h1 className='text-xl font-bold text-neutral-600 font-nunito'>My PRs</h1>
-  
+        <h1 className="text-xl font-bold text-neutral-600 font-nunito">
+          My PRs
+        </h1>
 
         <div className="flex flex-col overflow-y-auto">
           {prs.length === 0 ? (
             <EmptyPrs />
-
-
           ) : (
-            prs.map((pr) => (
-              <PRComponent key={pr.id} pr={pr} />
-            ))
+            prs.map((pr) => <PRComponent key={pr.id} pr={pr} />)
           )}
         </div>
       </section>

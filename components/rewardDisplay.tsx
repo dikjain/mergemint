@@ -1,95 +1,105 @@
-import CircularGallery from "./CircularGallery";
-import { useMarkStore, defaultItems } from "@/app/store/store";
+import { useMarkStore, defaultItems } from '@/app/store/store';
 import PixelBlast from './PixelBlast';
-import Card from './Card';
-
+import MilestoneBar from './MilestoneBar';
+import { motion } from 'framer-motion';
 
 export default function RewardDisplay({ reward }: { reward: number }) {
-  const milestones = [0, 16.67, 33.33, 50, 66.67, 83.33, 100]
-  const { setCurrentMark, setCurrentItems, currentItems } = useMarkStore()
-
-  const handleMilestoneHover = (milestone: number) => {
-    setCurrentMark(milestone)
-    
-    const milestoneIndex = milestones.indexOf(milestone)
-    const itemForMilestone = defaultItems.slice(0, milestoneIndex + 1) 
-    setCurrentItems(itemForMilestone.length > 0 ? itemForMilestone : null)
-  }
+  const milestones = [0, 10, 25, 50, 80, 120, 200];
+  const { currentItems } = useMarkStore();
 
   return (
-    <div style={{ boxShadow: 'inset 0 0 10px 0 rgba(0, 0, 0, 0.1)' }} className='flex flex-col w-full relative bg-neutral-50 rounded-md h-full overflow-hidden'>
-      
-      
-      {/* Progress Bar with Milestones */}
-      <div style={{ boxShadow: ' 0 0 2px 0 rgba(0, 0, 0, 0.2)' }} className='absolute border border-black/5 bottom-[15px] left-1/2  bg-neutral-300 h-1.5 rounded-full -translate-x-1/2 w-[75%] z-20'>
-        <div className='absolute top-0 left-0 bg-neutral-500 h-full rounded-full' style={{ width: `${Math.min(reward, 100)}%` }}></div>  
-        {milestones.map((milestone, index) => (
-          <div
-            onMouseEnter={() => handleMilestoneHover(milestone)}
-            onMouseLeave={() => setCurrentItems(null)}
-            key={index}
-            className={`absolute  translate-y-1/6 w-3 h-3 rounded-full border-2 border-white ${
-              reward >= milestone ? 'bg-neutral-500' : 'bg-neutral-300'
-            }`}
-            style={{ left: `${milestone}%`, transform: 'translateX(-50%) translateY(-50%)' }}
-          />
+    <div
+      style={{ boxShadow: `inset 0 0 10px 0 rgba(0, 0, 0, 0.1)` }}
+      className="transition-all duration-300 flex flex-col w-full relative bg-neutral-50 rounded-md h-full overflow-hidden"
+    >
+      <MilestoneBar reward={reward} milestones={milestones} />
+
+      {currentItems && (
+        <div className="absolute top-1/2 z-50 left-1/2 gap-6 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+          <motion.div
+            key={currentItems.layoutId}
+            layoutId={currentItems.layoutId}
+            className="w-[200px] h-[200px] bg-white rounded-lg border p-1 border-neutral-200 shadow-lg"
+          >
+            <motion.img
+              src={currentItems.image}
+              alt={currentItems.text}
+              width={200}
+              layoutId={currentItems.layoutId + 'image'}
+              height={200}
+              draggable={false}
+              className="w-full h-full object-cover rounded-md"
+            />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.4 }}
+            className="max-w-[50%]"
+          >
+            <h3 className="text-xl font-nunito font-bold tracking-tight text-neutral-700">
+              {currentItems.title}
+            </h3>
+            <p className="text-sm text-neutral-600 mb-2">
+              {currentItems.description}
+            </p>
+            <p className="text-md font-bitcount-single font-medium text-neutral-700">
+              {currentItems.solana} SOL
+            </p>
+          </motion.div>
+        </div>
+      )}
+
+      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+        <PixelBlast
+          variant="circle"
+          pixelSize={4}
+          color="#e5e5e5"
+          patternScale={3}
+          patternDensity={1.5}
+          pixelSizeJitter={0.5}
+          enableRipples
+          rippleSpeed={0.4}
+          rippleThickness={0.12}
+          rippleIntensityScale={1.5}
+          speed={0.6}
+          edgeFade={0.25}
+          transparent
+        />
+
+        {/* Floating reward items */}
+        {defaultItems.map((item) => (
+          <motion.div
+            key={item.layoutId}
+            animate={{
+              opacity:
+                currentItems && currentItems.layoutId !== item.layoutId
+                  ? 0.6
+                  : 1,
+              filter:
+                currentItems && currentItems.layoutId !== item.layoutId
+                  ? 'blur(4px)'
+                  : 'none',
+            }}
+            layoutId={item.layoutId}
+            className="w-20 h-20 bg-white rounded-lg border p-[2px] border-neutral-200 absolute shadow-lg"
+            style={{
+              left: `${item.x}%`,
+              top: `${item.y - 20}%`,
+            }}
+          >
+            <motion.img
+              src={item.image}
+              alt={item.text}
+              width={80}
+              layoutId={item.layoutId + 'image'}
+              height={80}
+              draggable={false}
+              className="w-full h-full object-cover rounded-md"
+            />
+          </motion.div>
         ))}
       </div>
-
-      {/* <div className='h-[500px] w-full scale-110 -translate-y-[15px]'>
-        <CircularGallery 
-          bend={-2} 
-          textColor="#000000" 
-          borderRadius={0.05} 
-          scrollEase={0.02}
-          autoplay={true}
-          autoplaySpeed={4}
-        />
-      </div> */}
-
-  
-  
-  
-  <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-    <PixelBlast
-      variant="circle"
-      pixelSize={4}
-      color="#e5e5e5"
-      patternScale={3}
-      patternDensity={1.5}
-      pixelSizeJitter={0.5}
-      enableRipples
-      rippleSpeed={0.4}
-      rippleThickness={0.12}
-      rippleIntensityScale={1.5}
-      speed={0.6}
-      edgeFade={0.25}
-      transparent
-    />
-    
-    {defaultItems.map((item, index) => (
-      <Card
-        key={item.layoutId}
-        width="w-20"
-        height="h-20"
-        padding="p-0.5"
-        className="absolute z-10 shadow-lg"
-        style={{  
-          left: `${item.x}%`,
-          top: `${item.y}%`,
-          transform: `translate(-50%, -50%) rotate(${item.rotation}deg)`
-        }}
-      >
-          <img
-            src={item.image}
-            alt={item.text}
-            className="w-full h-full object-cover rounded-md"
-          />
-      </Card>
-    ))}
-  </div>
-
-
     </div>
   );
-}   
+}
