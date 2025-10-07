@@ -26,9 +26,11 @@ export default function Dashboard() {
   useEffect(() => {
     const initDashboard = async () => {
       try {
+        // Check if session exists
         const sessionResult = await getCurrentSession();
 
         if (!sessionResult.success || !sessionResult.data) {
+          // No session, redirect to landing page
           router.push('/');
           return;
         }
@@ -85,7 +87,7 @@ export default function Dashboard() {
         </Card>
 
         <h1 className="text-xl font-bold text-neutral-600 font-nunito">
-          My PRs sssssssssssss
+          My PRs
         </h1>
 
         <div className="flex flex-col overflow-y-auto">
