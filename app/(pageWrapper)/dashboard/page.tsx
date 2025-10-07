@@ -26,11 +26,9 @@ export default function Dashboard() {
   useEffect(() => {
     const initDashboard = async () => {
       try {
-        // Check if session exists
         const sessionResult = await getCurrentSession();
 
         if (!sessionResult.success || !sessionResult.data) {
-          // No session, redirect to landing page
           router.push('/');
           return;
         }
