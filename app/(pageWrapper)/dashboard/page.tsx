@@ -85,7 +85,7 @@ export default function Dashboard() {
         </Card>
 
         <h1 className="text-xl font-bold text-neutral-600 font-nunito">
-          My PRs
+          My PRs sssssssssssss
         </h1>
 
         <div className="flex flex-col overflow-y-auto">
