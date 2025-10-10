@@ -7,6 +7,7 @@ import {
   Bitcount_Single,
 } from 'next/font/google';
 import './globals.css';
+import { Analytics } from '@vercel/analytics/next';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -49,6 +50,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${exo2.variable} ${bitcountSingle.variable} h-screen w-full antialiased`}
       >
         {children}
+        <Analytics />
       </body>
     </html>
   );

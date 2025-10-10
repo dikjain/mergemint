@@ -2,31 +2,57 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {  Cog6ToothIcon } from '@heroicons/react/24/outline';
+import {
+  Cog6ToothIcon,
+  ArrowLeftEndOnRectangleIcon,
+} from '@heroicons/react/24/outline';
 import { logout } from '../api/apiExporter';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from './ui/dialog';
+import { useGitHubAuth } from '../hooks/useGitHubAuth';
 
-const navigationItems = [
-  { label: 'Dashboard', hasBorder: true, route: '/dashboard' },
-  { label: 'Bounties', hasBorder: true, route: '/bounties' },
-  { label: 'Wall of Fame', hasBorder: false, route: '/wall-of-fame' },
-  { label: 'Settings', hasBorder: false, isBottom: true, icon: Cog6ToothIcon, route: '/settings' },
-];
+const navigationItems = (isCompany: boolean) =>
+  isCompany
+    ? [
+        { label: 'Dashboard', hasBorder: true, route: '/company' },
+        { label: 'Help', hasBorder: false, route: '/company/contributors' },
+        {
+          label: 'Logout',
+          isRed: true,
+          hasBorder: false,
+          isBottom: true,
+          icon: ArrowLeftEndOnRectangleIcon,
+          route: '/company/logos',
+        },
+      ]
+    : [
+        { label: 'Dashboard', hasBorder: true, route: '/dashboard' },
+        { label: 'Bounties', hasBorder: true, route: '/bounties' },
+        { label: 'Wall of Fame', hasBorder: false, route: '/wall-of-fame' },
+        {
+          label: 'Logout',
+          isRed: true,
+          hasBorder: false,
+          isBottom: true,
+          icon: ArrowLeftEndOnRectangleIcon,
+          route: '/company/logos',
+        },
+      ];
 
-export default function Sidebar() {
+export default function Sidebar({ isCompany }: { isCompany?: boolean }) {
   const router = useRouter();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { userData } = useGitHubAuth();
 
   const handleNavigation = (route: string, label: string) => {
-    if (label === 'Settings') {
+    if (label === 'Logout') {
       setIsLogoutDialogOpen(true);
     } else {
       router.push(route);
@@ -35,13 +61,11 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    
+
     try {
       const result = await logout();
-      
-      if (result.success) {
-        router.push('/');
-      } else {
+
+      if (!result.success) {
         alert(result.error || 'Failed to logout. Please try again.');
       }
     } catch (error) {
@@ -50,16 +74,17 @@ export default function Sidebar() {
     } finally {
       setIsLoggingOut(false);
       setIsLogoutDialogOpen(false);
+      window.location.reload();
     }
   };
 
   return (
     <div className="flex flex-col h-full max-w-[180px] py-8 px-6 gap-1 border-r border-neutral-300">
-      {navigationItems.map((item, index) => (
-        <h2 
+      {navigationItems(isCompany || false).map((item, index) => (
+        <h2
           key={item.label + index}
           onClick={() => handleNavigation(item.route, item.label)}
-          className={`text-md text-neutral-500 cursor-pointer text-nowrap font-semibold tracking-tight flex items-center gap-1 font-nunito hover:text-neutral-700 transition-colors ${
+          className={`text-md ${item.isRed ? 'text-red-500/60' : 'text-neutral-500 hover:text-neutral-700'} cursor-pointer text-nowrap font-semibold tracking-tight flex items-center gap-1 font-nunito  transition-colors ${
             item.hasBorder ? 'border-b border-neutral-300' : ''
           } ${item.isBottom ? 'mt-auto' : ''}`}
         >
@@ -67,13 +92,14 @@ export default function Sidebar() {
           {item.label}
         </h2>
       ))}
-      
+
       <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Are you sure you want to log out?</DialogTitle>
             <DialogDescription>
-              You will be redirected to the login page and will need to sign in again to access your dashboard.
+              You will be redirected to the login page and will need to sign in
+              again to access your dashboard.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -88,8 +114,8 @@ export default function Sidebar() {
               onClick={handleLogout}
               disabled={isLoggingOut}
               className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-colors flex items-center gap-2 ${
-                isLoggingOut 
-                  ? 'bg-red-400 cursor-not-allowed' 
+                isLoggingOut
+                  ? 'bg-red-400 cursor-not-allowed'
                   : 'bg-red-500 hover:bg-red-600'
               }`}
             >
