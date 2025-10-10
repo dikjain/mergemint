@@ -46,7 +46,7 @@ export default function CompanyPage() {
             <SecretKeyCard secretKey={secretKey} isAuthenticated={!!userData} />
           </div>
 
-          <WebhookSetupCard />
+          <WebhookSetupCard isAuthenticated={!!userData} />
         </div>
       </section>
     </div>
