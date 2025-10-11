@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { User, UserDetails, ApiResponse, AuthSession } from './types';
 
+// Fetch user details from users table
 const fetchUserDetails = async (
   userId: string
 ): Promise<UserDetails | null> => {
@@ -23,10 +24,42 @@ const fetchUserDetails = async (
   }
 };
 
-/**
- * Log out the current user
- * Used by: components/Sidebar.tsx
- */
+export const loginWithGitHub = async (
+  redirectUrl?: string
+): Promise<ApiResponse<void>> => {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: redirectUrl || `${window.location.origin}/dashboard`,
+      },
+    });
+
+    if (error) {
+      console.error('GitHub OAuth error:', error);
+      return {
+        data: null,
+        error: 'Failed to login with GitHub. Please try again.',
+        success: false,
+      };
+    }
+
+    console.log('GitHub OAuth initiated successfully:', data);
+    return {
+      data: null,
+      error: null,
+      success: true,
+    };
+  } catch (error) {
+    console.error('Unexpected error during GitHub login:', error);
+    return {
+      data: null,
+      error: 'An unexpected error occurred during login.',
+      success: false,
+    };
+  }
+};
+
 export const logout = async (): Promise<ApiResponse<void>> => {
   try {
     const { error } = await supabase.auth.signOut();
@@ -55,10 +88,6 @@ export const logout = async (): Promise<ApiResponse<void>> => {
   }
 };
 
-/**
- * Get current user session with details
- * Used by: hooks/useGitHubAuth.ts, app/(pageWrapper)/dashboard/page.tsx
- */
 export const getCurrentSession = async (): Promise<
   ApiResponse<AuthSession>
 > => {
