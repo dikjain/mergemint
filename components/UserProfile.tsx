@@ -1,14 +1,7 @@
 'use client';
 
-import { User, UserDetails } from '@/api/apiExporter';
 import { getDisplayName } from '@/utils';
-
-type UserProfileProps = {
-  user: User | null;
-  userDetails: UserDetails | null;
-  onClick: () => void;
-  isAuthenticating: boolean;
-};
+import type { UserProfileProps } from '@/types';
 
 export default function UserProfile({
   user,

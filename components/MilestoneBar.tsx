@@ -1,10 +1,6 @@
 import { useState } from 'react';
 import { useMarkStore, defaultItems } from '@/app/store/store';
-
-interface MilestoneBarProps {
-  reward: number;
-  milestones: number[];
-}
+import type { MilestoneBarProps } from '@/types';
 
 export default function MilestoneBar({
   reward,

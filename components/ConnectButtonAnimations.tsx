@@ -1,9 +1,5 @@
 import AnimatedPath from './AnimatedPath';
-
-interface ConnectButtonAnimationsProps {
-  cardSize: { width: number; height: number };
-  paths: string[];
-}
+import type { ConnectButtonAnimationsProps } from '@/types';
 
 export default function ConnectButtonAnimations({
   cardSize,

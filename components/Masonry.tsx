@@ -1,31 +1,43 @@
-"use client";
+'use client';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-
-
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { gsap } from 'gsap';
+import type { MasonryItem, MasonryGridItem, MasonryProps } from '@/types';
 
 /**
  * Custom hook for responsive media queries
  * Returns a value based on which media query matches
  */
-const useMedia = (queries: string[], values: number[], defaultValue: number): number => {
+const useMedia = (
+  queries: string[],
+  values: number[],
+  defaultValue: number
+): number => {
   const get = () => {
     if (typeof window === 'undefined') return defaultValue;
-    return values[queries.findIndex(q => window.matchMedia(q).matches)] ?? defaultValue;
+    return (
+      values[queries.findIndex((q) => window.matchMedia(q).matches)] ??
+      defaultValue
+    );
   };
 
   const [value, setValue] = useState<number>(get);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const handler = () => setValue(get);
-    const mediaQueries = queries.map(q => window.matchMedia(q));
-    
-    mediaQueries.forEach(mq => mq.addEventListener('change', handler));
-    return () => mediaQueries.forEach(mq => mq.removeEventListener('change', handler));
+    const mediaQueries = queries.map((q) => window.matchMedia(q));
+
+    mediaQueries.forEach((mq) => mq.addEventListener('change', handler));
+    return () =>
+      mediaQueries.forEach((mq) => mq.removeEventListener('change', handler));
   }, [queries]);
 
   return value;
@@ -59,8 +71,8 @@ const useMeasure = <T extends HTMLElement>() => {
 const preloadImages = async (urls: string[]): Promise<void> => {
   await Promise.all(
     urls.map(
-      src =>
-        new Promise<void>(resolve => {
+      (src) =>
+        new Promise<void>((resolve) => {
           const img = new Image();
           img.src = src;
           img.onload = img.onerror = () => resolve();
@@ -68,32 +80,6 @@ const preloadImages = async (urls: string[]): Promise<void> => {
     )
   );
 };
-
-interface Item {
-  id: string;
-  img: string;
-  url: string;
-  height: number;
-}
-
-interface GridItem extends Item {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-interface MasonryProps {
-  items: Item[];
-  ease?: string;
-  duration?: number;
-  stagger?: number;
-  animateFrom?: 'bottom' | 'top' | 'left' | 'right' | 'center' | 'random';
-  scaleOnHover?: boolean;
-  hoverScale?: number;
-  blurToFocus?: boolean;
-  colorShiftOnHover?: boolean;
-}
 
 const Masonry: React.FC<MasonryProps> = ({
   items,
@@ -104,11 +90,16 @@ const Masonry: React.FC<MasonryProps> = ({
   scaleOnHover = true,
   hoverScale = 0.95,
   blurToFocus = true,
-  colorShiftOnHover = false
+  colorShiftOnHover = false,
 }) => {
   // Responsive column count based on screen width
   const columns = useMedia(
-    ['(min-width:1500px)', '(min-width:1000px)', '(min-width:600px)', '(min-width:400px)'],
+    [
+      '(min-width:1500px)',
+      '(min-width:1000px)',
+      '(min-width:600px)',
+      '(min-width:400px)',
+    ],
     [5, 4, 3, 2],
     1
   );
@@ -119,14 +110,16 @@ const Masonry: React.FC<MasonryProps> = ({
   /**
    * Calculates initial position for animation based on animateFrom prop
    */
-  const getInitialPosition = (item: GridItem) => {
+  const getInitialPosition = (item: MasonryGridItem) => {
     const containerRect = containerRef.current?.getBoundingClientRect();
     if (!containerRect) return { x: item.x, y: item.y };
 
     let direction = animateFrom;
     if (animateFrom === 'random') {
       const dirs = ['top', 'bottom', 'left', 'right'];
-      direction = dirs[Math.floor(Math.random() * dirs.length)] as typeof animateFrom;
+      direction = dirs[
+        Math.floor(Math.random() * dirs.length)
+      ] as typeof animateFrom;
     }
 
     switch (direction) {
@@ -141,7 +134,7 @@ const Masonry: React.FC<MasonryProps> = ({
       case 'center':
         return {
           x: containerRect.width / 2 - item.w / 2,
-          y: containerRect.height / 2 - item.h / 2
+          y: containerRect.height / 2 - item.h / 2,
         };
       default:
         return { x: item.x, y: item.y + 100 };
@@ -150,21 +143,21 @@ const Masonry: React.FC<MasonryProps> = ({
 
   // Preload images when items change
   useEffect(() => {
-    preloadImages(items.map(i => i.img)).then(() => setImagesReady(true));
+    preloadImages(items.map((i) => i.img)).then(() => setImagesReady(true));
   }, [items]);
 
   /**
    * Calculates masonry grid layout
    * Distributes items across columns with optimal height distribution
    */
-  const grid = useMemo<GridItem[]>(() => {
+  const grid = useMemo<MasonryGridItem[]>(() => {
     if (!width) return [];
     const colHeights = new Array(columns).fill(0);
     const gap = 16;
     const totalGaps = (columns - 1) * gap;
     const columnWidth = (width - totalGaps) / columns;
 
-    return items.map(child => {
+    return items.map((child) => {
       const col = colHeights.indexOf(Math.min(...colHeights));
       const x = col * (columnWidth + gap);
       const height = child.height / 2;
@@ -199,7 +192,7 @@ const Masonry: React.FC<MasonryProps> = ({
             y: start.y,
             width: item.w,
             height: item.h,
-            ...(blurToFocus && { filter: 'blur(10px)' })
+            ...(blurToFocus && { filter: 'blur(10px)' }),
           },
           {
             opacity: 1,
@@ -207,7 +200,7 @@ const Masonry: React.FC<MasonryProps> = ({
             ...(blurToFocus && { filter: 'blur(0px)' }),
             duration: 0.8,
             ease: 'power3.out',
-            delay: index * stagger
+            delay: index * stagger,
           }
         );
       } else {
@@ -216,7 +209,7 @@ const Masonry: React.FC<MasonryProps> = ({
           ...animProps,
           duration,
           ease,
-          overwrite: 'auto'
+          overwrite: 'auto',
         });
       }
     });
@@ -232,7 +225,7 @@ const Masonry: React.FC<MasonryProps> = ({
       gsap.to(`[data-key="${id}"]`, {
         scale: hoverScale,
         duration: 0.3,
-        ease: 'power2.out'
+        ease: 'power2.out',
       });
     }
     if (colorShiftOnHover) {
@@ -249,7 +242,7 @@ const Masonry: React.FC<MasonryProps> = ({
       gsap.to(`[data-key="${id}"]`, {
         scale: 1,
         duration: 0.3,
-        ease: 'power2.out'
+        ease: 'power2.out',
       });
     }
     if (colorShiftOnHover) {
@@ -260,15 +253,20 @@ const Masonry: React.FC<MasonryProps> = ({
 
   return (
     <div ref={containerRef} className="relative w-full h-full">
-      {grid.map(item => (
+      {grid.map((item) => (
         <div
           key={item.id}
           data-key={item.id}
           className="absolute box-content"
-          style={{ willChange: 'transform, width, height, opacity', border : '1px solid #00000030' , borderRadius : '12px', padding : '2px' }}
+          style={{
+            willChange: 'transform, width, height, opacity',
+            border: '1px solid #00000030',
+            borderRadius: '12px',
+            padding: '2px',
+          }}
           onClick={() => window.open(item.url, '_blank', 'noopener')}
-          onMouseEnter={e => handleMouseEnter(item.id, e.currentTarget)}
-          onMouseLeave={e => handleMouseLeave(item.id, e.currentTarget)}
+          onMouseEnter={(e) => handleMouseEnter(item.id, e.currentTarget)}
+          onMouseLeave={(e) => handleMouseLeave(item.id, e.currentTarget)}
         >
           <div
             className="relative w-full h-full bg-cover bg-center rounded-[10px] shadow-[0px_10px_50px_-10px_rgba(0,0,0,0.2)] uppercase text-[10px] leading-[10px]"
@@ -276,9 +274,9 @@ const Masonry: React.FC<MasonryProps> = ({
           >
             {colorShiftOnHover && (
               <div className="color-overlay absolute inset-0 rounded-[10px] bg-gradient-to-tr from-pink-500/50 to-sky-500/50 opacity-0 pointer-events-none" />
-              )}
-            </div>
+            )}
           </div>
+        </div>
       ))}
     </div>
   );

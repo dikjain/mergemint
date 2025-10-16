@@ -1,27 +1,10 @@
 import { create } from 'zustand';
+import type { MarkStore, StoreItem } from '@/types';
 
-export interface MarkStore {
-  currentMark: number;
-  currentItems: Item | null;
-  setCurrentMark: (mark: number) => void;
-  incrementMark: (amount?: number) => void;
-  resetMark: () => void;
-  setCurrentItems: (item: Item | null) => void;
-}
+// Re-export types for convenience
+export type { MarkStore, StoreItem };
 
-export interface Item {
-  image: string;
-  text: string;
-  title: string;
-  description: string;
-  cost: number;
-  solana: number;
-  layoutId: string;
-  x: number;
-  y: number;
-  rotation: number;
-}
-export const defaultItems: Item[] = [
+export const defaultItems: StoreItem[] = [
   {
     image: `https://wallpapers.com/images/high/nft-monkey-441q73yzqpw8o6y5.webp`,
     text: 'Golden Ape',
@@ -140,7 +123,7 @@ export const useMarkStore = create<MarkStore>((set, get) => ({
     })),
   resetMark: () => set({ currentMark: 0 }),
 
-  setCurrentItems: (item: Item | null) => {
+  setCurrentItems: (item: StoreItem | null) => {
     set({ currentItems: item });
   },
 }));

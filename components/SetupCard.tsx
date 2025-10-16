@@ -1,9 +1,5 @@
 import React from 'react';
-
-interface SetupCardProps {
-  children?: React.ReactNode;
-  className?: string;
-}
+import type { SetupCardProps } from '@/types';
 
 const SetupCard = React.forwardRef<HTMLDivElement, SetupCardProps>(
   ({ children, className = '' }, ref) => {

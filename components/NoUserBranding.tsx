@@ -1,10 +1,9 @@
 'use client';
 import PRComponent from './PRComponent';
-
 import Card from './Card';
-
-import { mockPRs, MockPR } from '../lib/mockData';
 import Image from 'next/image';
+import { mockPRs } from '@/lib/mockData';
+import type { MockPR } from '@/types';
 
 export default function noUserBranding() {
   return (
