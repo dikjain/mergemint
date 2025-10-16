@@ -2,19 +2,7 @@ import { useState } from 'react';
 import SetupCard from '../SetupCard';
 import Image from 'next/image';
 import { Square2StackIcon, CheckIcon } from '@heroicons/react/24/outline';
-
-interface WebhookConfig {
-  id: string;
-  title: string;
-  url: string;
-  events: string;
-  image: string;
-  note?: string;
-}
-
-interface WebhookSetupCardProps {
-  isAuthenticated?: boolean;
-}
+import type { WebhookConfig, WebhookSetupCardProps } from '@/types';
 
 export default function WebhookSetupCard({
   isAuthenticated = false,
