@@ -11,7 +11,7 @@ const REDEEM_FUNCTION_URL =
  */
 export interface RedeemRequest {
   user_id: string;
-  item_id: string;
+  item_id: number;
   user_wallet: string;
   idempotency_key?: string;
 }
@@ -45,6 +45,7 @@ export async function redeemStoreItem(
   console.log('📦 Request params:', {
     user_id: params.user_id,
     item_id: params.item_id,
+    item_id_type: typeof params.item_id,
     user_wallet: params.user_wallet,
     idempotency_key: params.idempotency_key,
   });

@@ -93,7 +93,8 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
    */
   const handleRedeem = async () => {
     console.log('🔵 Redeem button clicked');
-    console.log('  Item:', item.title, '(ID:', item.id, ')');
+    console.log('  Item:', item.title);
+    console.log('  Item ID:', item.id, '(type:', typeof item.id, ')');
     console.log('  Cost:', item.cost, 'MM');
 
     // Check if wallet is connected
