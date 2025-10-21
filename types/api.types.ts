@@ -82,7 +82,7 @@ export type AuthSession = {
 };
 
 export type BackendStoreItem = {
-  id: string;
+  id: number;
   created_at: string;
   image: string;
   name: string;

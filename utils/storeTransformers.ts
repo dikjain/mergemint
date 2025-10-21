@@ -17,6 +17,7 @@ export const transformBackendStoreItem = (
   backendItem: BackendStoreItem
 ): StoreItem => {
   return {
+    id: backendItem.id,
     image: backendItem.image,
     text: backendItem.name,
     title: backendItem.name,
