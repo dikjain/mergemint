@@ -6,17 +6,26 @@ import { StoreItem } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { toast } from 'sonner';
+import { redeemStoreItem, generateIdempotencyKey } from '@/api/redeem';
+import { useAuthStore } from '@/app/store/authStore';
 
 export const StoreItemCard = ({ item }: { item: StoreItem }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const dialogVideoRef = useRef<HTMLVideoElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDialogHovered, setIsDialogHovered] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
 
   const { wallet, wallets, select, connected, publicKey, disconnect } =
     useWallet();
   const { setVisible } = useWalletModal();
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
+
+  // Get user from auth store
+  const { user, userDetails } = useAuthStore();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,6 +61,21 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
     }
   };
 
+  const handleDialogMouseEnter = () => {
+    setIsDialogHovered(true);
+    if (item.video && dialogVideoRef.current) {
+      dialogVideoRef.current.play();
+    }
+  };
+
+  const handleDialogMouseLeave = () => {
+    setIsDialogHovered(false);
+    if (item.video && dialogVideoRef.current) {
+      dialogVideoRef.current.pause();
+      dialogVideoRef.current.currentTime = 0;
+    }
+  };
+
   const handleNameClick = () => {
     setIsDialogOpen(true);
   };
@@ -64,11 +88,130 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
     }
   };
 
-  const handleRedeem = () => {
-    if (!connected) {
+  /**
+   * Handles the redemption process
+   */
+  const handleRedeem = async () => {
+    // Check if wallet is connected
+    if (!connected || !publicKey) {
+      toast.error('Please connect your wallet first');
       setVisible(true);
-    } else {
-      console.log('Redeeming item for:', publicKey?.toString());
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!user || !userDetails) {
+      toast.error('Please log in to redeem items');
+      return;
+    }
+
+    // Check if user has sufficient points
+    if (!userDetails.ipr_count || userDetails.ipr_count < item.cost) {
+      toast.error(
+        `Insufficient points. You need ${item.cost} MM but have ${userDetails.ipr_count || 0} MM`
+      );
+      return;
+    }
+
+    // Prevent double submission
+    if (isRedeeming) {
+      return;
+    }
+
+    setIsRedeeming(true);
+
+    // Generate idempotency key
+    const idempotencyKey = generateIdempotencyKey();
+
+    // Show loading toast
+    const loadingToast = toast.loading('Processing redemption...', {
+      description: 'Please wait while we process your transaction',
+    });
+
+    try {
+      // Call the edge function
+      const response = await redeemStoreItem({
+        user_id: user.id,
+        item_id: item.id,
+        user_wallet: publicKey.toString(),
+        idempotency_key: idempotencyKey,
+      });
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      // Handle response
+      if (response.error) {
+        // Check for specific error messages
+        if (response.error.includes('insufficient points')) {
+          toast.error('Insufficient Points', {
+            description: 'You do not have enough MM points to redeem this item',
+          });
+        } else if (response.error.includes('item not found')) {
+          toast.error('Item Not Found', {
+            description: 'This item is no longer available',
+          });
+        } else if (response.error.includes('user not found')) {
+          toast.error('User Not Found', {
+            description: 'Please log in again',
+          });
+        } else {
+          toast.error('Redemption Failed', {
+            description: response.error,
+          });
+        }
+      } else if (response.success && response.tx) {
+        // Success!
+        toast.success('Redemption Successful! 🎉', {
+          description: (
+            <div className="flex flex-col gap-1">
+              <p>Your item has been redeemed successfully!</p>
+              <p className="text-xs font-mono text-neutral-600 truncate">
+                TX: {response.tx.slice(0, 8)}...{response.tx.slice(-8)}
+              </p>
+            </div>
+          ),
+          duration: 10000,
+        });
+
+        // Close dialog after successful redemption
+        setTimeout(() => {
+          setIsDialogOpen(false);
+        }, 2000);
+
+        // Optionally refresh user data to update points
+        // You can call a refresh function here if available
+      } else if (response.result) {
+        // Idempotent response - already processed
+        if (response.result.status === 'success') {
+          toast.info('Already Redeemed', {
+            description: 'This redemption was already processed successfully',
+          });
+        } else if (response.result.status === 'pending') {
+          toast.info('Redemption Pending', {
+            description: 'Your redemption is still being processed',
+          });
+        } else if (response.result.status === 'failed') {
+          toast.error('Previous Redemption Failed', {
+            description: response.result.failure_reason || 'Unknown error',
+          });
+        }
+      } else {
+        toast.error('Unknown Response', {
+          description: 'Unexpected response from server',
+        });
+      }
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      console.error('Redemption error:', error);
+      toast.error('Redemption Failed', {
+        description:
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred',
+      });
+    } finally {
+      setIsRedeeming(false);
     }
   };
 
@@ -90,7 +233,7 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
               <img
                 src={item.image}
                 alt={item.title}
-                className={`w-full h-full object-bottom object-cover transition-opacity duration-300 ${isHovered ? 'opacity-0' : 'opacity-100'}`}
+                className={`w-full h-full object-bottom object-cover  transition-opacity duration-300 ${isHovered ? 'opacity-0' : 'opacity-100'}`}
               />
               <video
                 ref={videoRef}
@@ -139,7 +282,7 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
               style={{ fontSize: 16, lineHeight: 20 }}
               className=" text-white/80 font-bitcount-single flex  items-center justify-center gap-1 h-full"
             >
-              {0.0032}
+              {item.solana}
               <img
                 src="/images/solanaLogoMark.svg"
                 alt="solana"
@@ -194,12 +337,34 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="bg-stone-100 border border-neutral-300/60 backdrop-blur-2xl min-w-[700px] max-h-[450px] flex gap-4 p-5">
-          <div className="rounded-md w-2/3 shadow-[2px_2px_0px_#00000030] border border-neutral-300/70 h-full overflow-hidden bg-neutral-100">
-            <img
-              src={item.image}
-              alt={item.title}
-              className=" h-full -translate-y-1/4 w-full scale-150 object-cover object-bottom"
-            />
+          <div
+            className="rounded-md w-1/2 shadow-[2px_2px_0px_#00000030] border border-neutral-300/70 h-full overflow-hidden bg-neutral-100 relative"
+            onMouseEnter={handleDialogMouseEnter}
+            onMouseLeave={handleDialogMouseLeave}
+          >
+            {item.video ? (
+              <>
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className={`h-full -translate-y-1/4 w-full scale-150 object-cover object-bottom transition-opacity duration-300 ${isDialogHovered ? 'opacity-0' : 'opacity-100'}`}
+                />
+                <video
+                  ref={dialogVideoRef}
+                  src={item.video}
+                  className={`absolute inset-0 h-full -translate-y-1/4 w-full scale-150 object-cover object-bottom transition-opacity duration-300 ${isDialogHovered ? 'opacity-100' : 'opacity-0'}`}
+                  muted
+                  loop
+                  playsInline
+                />
+              </>
+            ) : (
+              <img
+                src={item.image}
+                alt={item.title}
+                className=" h-full -translate-y-1/4 w-full scale-150 object-cover object-bottom"
+              />
+            )}
           </div>
 
           <div className="flex flex-col gap-3.5">
@@ -208,10 +373,15 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
                 {item.title}
               </DialogTitle>
             </DialogHeader>
+            <div className="flex-1 max-h-fit">
+              <p className="text-sm text-neutral-600 font-nunito leading-relaxed ">
+                {item.description.trim()}
+              </p>
+            </div>
 
-            <div className="flex gap-3 w-full">
-              <div className="flex-1 flex flex-col gap-1 border-r border-neutral-300/50 pr-3">
-                <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
+            <div className="flex gap-3 flex-row-reverse w-full">
+              <div className="flex-1 flex flex-col gap-1 pl-1">
+                <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide font-nunito">
                   SOL Price
                 </span>
                 <div className="flex items-center gap-1.5 bg-neutral-200/50 px-2 py-1.5 rounded-md shadow-[0px_2px_0px_#00000020]">
@@ -226,8 +396,8 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
                 </div>
               </div>
 
-              <div className="flex-1 flex flex-col gap-1 pl-1">
-                <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
+              <div className="flex-1 flex flex-col gap-1 border-r border-neutral-300/50 pr-3">
+                <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide font-nunito">
                   MM Cost
                 </span>
                 <span className="text-base font-bitcount-single text-neutral-800 bg-neutral-200/50 px-2 py-1.5 rounded-md shadow-[0px_2px_0px_#00000020]">
@@ -236,27 +406,13 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
               </div>
             </div>
 
-            <div className="flex-1">
-              <h3 className="text-xs font-semibold text-neutral-600 uppercase tracking-wide mb-1.5">
-                Description
-              </h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                This exclusive NFT can be redeemed using your MergeMint points
-                earned through contributions. Once redeemed, it will be minted
-                and transferred to your connected wallet.
-              </p>
-            </div>
-
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
                 Wallet
               </label>
 
               {connected && publicKey ? (
-                <div
-                  style={{ boxShadow: '0px 2px 4px #12121220' }}
-                  className="w-full px-3 py-2.5 bg-neutral-100 border border-neutral-300/50 rounded-md flex items-center justify-between"
-                >
+                <div className="w-full px-3 py-2.5 bg-neutral-100 border border-neutral-300/80 rounded-md flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 bg-neutral-800 rounded-full flex items-center justify-center">
                       <svg
@@ -432,18 +588,45 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
 
             <button
               onClick={handleRedeem}
+              disabled={isRedeeming}
               style={{
                 boxShadow: connected
                   ? '0px 3px 0px #00000040'
                   : '0px 3px 0px #00000040',
               }}
               className={`w-full py-2.5 ${
-                connected
-                  ? 'bg-neutral-800 hover:bg-neutral-900'
-                  : 'bg-neutral-700 hover:bg-neutral-800'
-              } text-white rounded-md font-exo-2 font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-150 active:translate-y-[1px] active:shadow-[0px_2px_0px_#00000040]`}
+                isRedeeming
+                  ? 'bg-neutral-600 cursor-not-allowed'
+                  : connected
+                    ? 'bg-neutral-800 hover:bg-neutral-900'
+                    : 'bg-neutral-700 hover:bg-neutral-800'
+              } text-white rounded-md font-exo-2 font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-150 ${!isRedeeming && 'active:translate-y-[1px] active:shadow-[0px_2px_0px_#00000040]'} disabled:opacity-70`}
             >
-              {connected ? (
+              {isRedeeming ? (
+                <>
+                  <svg
+                    className="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : connected ? (
                 <>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

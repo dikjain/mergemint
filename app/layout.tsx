@@ -9,6 +9,7 @@ import {
 import './globals.css';
 import { Analytics } from '@vercel/analytics/next';
 import { SolanaProvider } from '@/components/providers/SolanaProvider';
+import { Toaster } from '@/components/ui/sonner';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 const geistSans = Geist({
@@ -52,6 +53,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${exo2.variable} ${bitcountSingle.variable} h-screen w-full antialiased`}
       >
         <SolanaProvider>{children}</SolanaProvider>
+        <Toaster position="top-right" richColors />
         <Analytics />
       </body>
     </html>

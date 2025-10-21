@@ -87,7 +87,10 @@ export default function StorePage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5   absolute h-full w-full">
+                <div
+                  style={{ height: `${renderHeight}px` }}
+                  className="border-l-2 border-dashed border-neutral-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5   absolute  w-full"
+                >
                   {Array.from({ length: 5 }).map((_, index) => {
                     const count = storeItems.length % 5;
                     let height =
@@ -97,7 +100,7 @@ export default function StorePage() {
                       <div
                         key={index}
                         style={{ height: `${height}px` }}
-                        className=" mr-4translate-x-[12px]  border-t-0 border-b-0 border-l-0 border-dashed border-2 border-neutral-200"
+                        className=" ml-2 border-t-0 border-b-0 border-l-0 border-dashed border-2 border-neutral-200"
                       ></div>
                     );
                   })}
@@ -107,7 +110,9 @@ export default function StorePage() {
                   (_, index) => (
                     <div
                       key={index}
-                      style={{ top: `${(index + 1) * 268 + index * 12}px` }}
+                      style={{
+                        top: `${(index + 1) * 268 + index * 12 + 16}px`,
+                      }}
                       className="w-full   absolute  border-l-0 border-r-0 border-t-0 border-dashed border-2 border-neutral-200"
                     ></div>
                   )
@@ -115,7 +120,7 @@ export default function StorePage() {
 
                 <div
                   ref={screenRef}
-                  className="grid px-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6"
+                  className="grid px-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 pt-4"
                 >
                   {storeItems.length === 0 && (
                     <div className="col-span-full text-center text-neutral-500 font-exo-2">
