@@ -1,69 +1,135 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Sidebar from '../../../components/Sidebar';
-import Card from '../../../components/Card';
-import { defaultItems } from '@/app/store/store';
+import UserProfile from '../../../components/UserProfile';
+import { StoreItemCard } from '../../../components/StoreItemCard';
+import { fetchStoreItems } from '../../../api/apiExporter';
+import { useGitHubAuth } from '../../../hooks/useGitHubAuth';
+import { useMarkStore } from '@/app/store/store';
+import { useAuthStore } from '@/app/store/authStore';
+import { transformBackendStoreItems } from '@/utils/storeTransformers';
 
 export default function StorePage() {
+  const { loginWithGitHub, isAuthenticating } = useGitHubAuth();
+  const { user, userDetails, fetchSession } = useAuthStore();
+  const [renderHeight, setRenderHeight] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { storeItems, setStoreItems } = useMarkStore();
+  const screenRef = useRef<HTMLDivElement>(null!);
+
+  useEffect(() => {
+    fetchSession();
+  }, [fetchSession]);
+
+  useEffect(() => {
+    const loadStoreItems = async () => {
+      setIsLoading(true);
+      console.log('Fetching store items...');
+      const response = await fetchStoreItems();
+
+      if (response.success && response.data) {
+        const transformedItems = transformBackendStoreItems(response.data);
+        console.log('Transformed items:', transformedItems);
+        setStoreItems(transformedItems);
+      } else {
+        console.error('Failed to load store items:', response.error);
+      }
+
+      setIsLoading(false);
+    };
+
+    loadStoreItems();
+  }, [setStoreItems]);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (screenRef.current) {
+        const height = screenRef.current.clientHeight;
+        setRenderHeight(height);
+      }
+    };
+    updateHeight();
+    return () => {
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, [screenRef.current, user]);
+
+  const handleLogin = async () => {
+    await loginWithGitHub('/store', false);
+  };
+
   return (
     <div className="h-screen bg-white flex w-screen max-w-[1440px]">
       <Sidebar />
 
-      <section className="w-full h-full bg-white px-8 py-8 flex flex-col gap-4 border-r border-neutral-200">
+      <section className="w-full h-full bg-white px-4 pt-8  flex flex-col gap-4 border-r border-neutral-200">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-neutral-600 font-exo-2">
             NFT Store
           </h1>
+
+          <UserProfile
+            user={user}
+            userDetails={userDetails}
+            onClick={handleLogin}
+            isAuthenticating={isAuthenticating}
+          />
         </div>
 
-        <div className="flex flex-col h-full overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {defaultItems.map((item) => (
-              <Card
-                key={item.layoutId}
-                height="h-80"
-                width="w-full"
-                className="hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="h-full flex flex-col">
-                  <div className="relative h-48 mb-4 overflow-hidden rounded-md">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+        {user && (
+          <div className="flex flex-col flex-1 overflow-x-hidden relative pb-8">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-neutral-500 font-exo-2">
+                  Loading store items...
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5   absolute h-full w-full">
+                  {Array.from({ length: 5 }).map((_, index) => {
+                    const count = storeItems.length % 5;
+                    let height =
+                      index + 1 <= count ? renderHeight : renderHeight - 268;
 
-                  <div className="flex-1 flex flex-col justify-between p-2">
-                    <div>
-                      <h3 className="text-lg font-bold text-neutral-800 mb-2 font-nunito">
-                        {item.title}
-                      </h3>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-neutral-500">Price:</span>
-                        <span className="text-lg font-bold text-neutral-800">
-                          ${item.cost}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-neutral-500">
-                          Solana:
-                        </span>
-                        <span className="text-sm font-medium text-purple-600">
-                          {item.solana} SOL
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    return (
+                      <div
+                        key={index}
+                        style={{ height: `${height}px` }}
+                        className=" mr-4translate-x-[12px]  border-t-0 border-b-0 border-l-0 border-dashed border-2 border-neutral-200"
+                      ></div>
+                    );
+                  })}
                 </div>
-              </Card>
-            ))}
+
+                {Array.from({ length: Math.floor(storeItems.length / 5) }).map(
+                  (_, index) => (
+                    <div
+                      key={index}
+                      style={{ top: `${(index + 1) * 268 + index * 12}px` }}
+                      className="w-full   absolute  border-l-0 border-r-0 border-t-0 border-dashed border-2 border-neutral-200"
+                    ></div>
+                  )
+                )}
+
+                <div
+                  ref={screenRef}
+                  className="grid px-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6"
+                >
+                  {storeItems.length === 0 && (
+                    <div className="col-span-full text-center text-neutral-500 font-exo-2">
+                      No items available in the store
+                    </div>
+                  )}
+                  {storeItems.map((item) => (
+                    <StoreItemCard key={item.layoutId} item={item} />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-        </div>
+        )}
       </section>
     </div>
   );

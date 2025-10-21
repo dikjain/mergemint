@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Sidebar from '../../../components/Sidebar';
+import BountyRow from '../../../components/BountyRow';
 import { fetchBounties, type Bounty } from '../../../api/apiExporter';
-import { formatDate, getBountyStatusBadge } from '../../../utils';
 
 export default function BountiesPage() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
@@ -41,12 +41,6 @@ export default function BountiesPage() {
     }
   };
 
-  const getStatusDisplay = (status: string) => {
-    if (status === 'pending') return 'open';
-    if (status === 'active') return 'claimed';
-    return status;
-  };
-
   if (loading) {
     return (
       <div className="h-screen bg-white flex items-center justify-center">
@@ -64,7 +58,7 @@ export default function BountiesPage() {
 
       <section className="w-full h-full bg-white px-8 py-8 flex flex-col gap-4 border-r border-neutral-200">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-neutral-600 font-exo-2 ">
+          <h1 className="text-3xl font-bold text-neutral-600 font-exo-2">
             Bounties
           </h1>
           {bounties.length > 0 && (
@@ -85,64 +79,24 @@ export default function BountiesPage() {
             </div>
           ) : (
             <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
-              {/* Table Header */}
-              <div className="grid grid-cols-6 gap-4 p-4 bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-600">
+              <div
+                className="grid gap-4 p-4 bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-600"
+                style={{ gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr' }}
+              >
+                <div>Issue Name</div>
                 <div>Company</div>
                 <div>Repository</div>
                 <div>Issue #</div>
-                <div>Issue Name</div>
                 <div>Status</div>
                 <div>Created</div>
               </div>
 
-              {/* Table Rows */}
               {bounties.map((bounty) => (
-                <div
+                <BountyRow
                   key={bounty.id}
-                  className="grid grid-cols-6 gap-4 p-4 border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer"
-                  onClick={() => handleBountyClick(bounty)}
-                >
-                  {/* Company */}
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    {bounty.company_logo && (
-                      <img
-                        src={bounty.company_logo}
-                        alt={`${bounty.company_name} logo`}
-                        className="w-5 h-5 rounded object-cover flex-shrink-0"
-                      />
-                    )}
-                    <span className="text-neutral-600 truncate">
-                      {bounty.company_name || 'N/A'}
-                    </span>
-                  </div>
-
-                  {/* Repository Name */}
-                  <div className="font-medium text-neutral-800 truncate">
-                    {bounty.repo_name}
-                  </div>
-
-                  {/* Issue Number */}
-                  <div className="text-neutral-600 truncate">
-                    #{bounty.issue_number}
-                  </div>
-
-                  {/* Issue Name */}
-                  <div className="text-neutral-800 truncate">
-                    {bounty.issue_name || 'N/A'}
-                  </div>
-
-                  {/* Status */}
-                  <div className="flex items-center truncate">
-                    <span className={getBountyStatusBadge(bounty.status)}>
-                      {getStatusDisplay(bounty.status)}
-                    </span>
-                  </div>
-
-                  {/* Created Date */}
-                  <div className="text-neutral-500 text-sm truncate">
-                    {formatDate(bounty.created_at)}
-                  </div>
-                </div>
+                  bounty={bounty}
+                  onClick={handleBountyClick}
+                />
               ))}
             </div>
           )}

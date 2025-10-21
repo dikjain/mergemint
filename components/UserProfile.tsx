@@ -1,6 +1,6 @@
 'use client';
 
-import { getDisplayName } from '@/utils';
+import { getDisplayName } from '@/utils/formatters';
 import type { UserProfileProps } from '@/types';
 
 export default function UserProfile({
@@ -30,21 +30,38 @@ export default function UserProfile({
   const avatarUrl = user?.user_metadata?.avatar_url;
 
   return (
-    <div className="border border-neutral-200 rounded-lg p-1 relative flex items-center gap-2 text-neutral-500">
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt="User avatar"
-          className="w-6 h-6 rounded-full object-cover"
-        />
-      ) : (
-        <div className="w-6 h-6 bg-black/20 rounded-full" />
-      )}
-      <span className="text-sm">{displayName}</span>
+    <div className="flex items-center ">
+      <div
+        style={{ boxShadow: 'inset 0px 2px 4px #12121210' }}
+        className="border    border-neutral-200 rounded-md p-1 relative flex items-center gap-2 text-neutral-500"
+      >
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="User avatar"
+            className="w-6 h-6 shadow-[0px_2px_2px_#12121230] rounded-full object-cover border border-neutral-200"
+          />
+        ) : (
+          <div className="w-6 h-6 bg-black/20 rounded-full" />
+        )}
+        <span className="text-sm">{displayName}</span>
 
-      {!userDetails && (
-        <div className="w-2 h-2 bg-red-600 border border-red-500 absolute right-0 top-0 rounded-full translate-x-1/3 -translate-y-1/3 animate-pulse"></div>
-      )}
+        {!userDetails && (
+          <div className="w-2 h-2 bg-red-600 border border-red-500 absolute right-0 top-0 rounded-full translate-x-1/3 -translate-y-1/3 animate-pulse"></div>
+        )}
+      </div>
+      <div
+        style={{ boxShadow: 'inset 0px 2px 4px #12121210' }}
+        className="w-1 h-[33px] overflow-hidden bg-white border-t-3 border-b-3 border-neutral-200 scale-y-[0.3]  scale-x-[1.5]  relative z-30"
+      ></div>
+      <div
+        style={{ boxShadow: 'inset 0px 2px 4px #12121210' }}
+        className="border   border-neutral-200 rounded-md p-1 min-w-[30px] h-[33px] relative flex items-center gap-2 text-neutral-500"
+      >
+        <span className="text-sm w-full text-center font-nunito">
+          {userDetails?.ipr_count}
+        </span>
+      </div>
     </div>
   );
 }

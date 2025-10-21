@@ -1,11 +1,11 @@
-import { useMarkStore, defaultItems } from '@/app/store/store';
+import { useMarkStore } from '@/app/store/store';
 import PixelBlast from './PixelBlast';
 import MilestoneBar from './MilestoneBar';
 import { motion } from 'framer-motion';
 
 export default function RewardDisplay({ reward }: { reward: number }) {
   const milestones = [0, 10, 25, 50, 80, 120, 200];
-  const { currentItems } = useMarkStore();
+  const { currentItems, storeItems } = useMarkStore();
 
   return (
     <div
@@ -28,7 +28,7 @@ export default function RewardDisplay({ reward }: { reward: number }) {
               layoutId={currentItems.layoutId + 'image'}
               height={200}
               draggable={false}
-              className="w-full h-full object-cover rounded-md"
+              className="w-full h-full object-cover  object-bottom rounded-md"
             />
           </motion.div>
           <motion.div
@@ -67,8 +67,7 @@ export default function RewardDisplay({ reward }: { reward: number }) {
           transparent
         />
 
-        {/* Floating reward items */}
-        {defaultItems.map((item) => (
+        {storeItems.map((item) => (
           <motion.div
             key={item.layoutId}
             animate={{
@@ -95,7 +94,7 @@ export default function RewardDisplay({ reward }: { reward: number }) {
               layoutId={item.layoutId + 'image'}
               height={80}
               draggable={false}
-              className="w-full h-full object-cover rounded-md"
+              className="w-full h-full object-cover  object-bottom rounded-md"
             />
           </motion.div>
         ))}

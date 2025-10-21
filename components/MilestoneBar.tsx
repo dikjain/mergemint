@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { useMarkStore, defaultItems } from '@/app/store/store';
+import { useMarkStore } from '@/app/store/store';
 import type { MilestoneBarProps } from '@/types';
 
 export default function MilestoneBar({
   reward,
   milestones,
 }: MilestoneBarProps) {
-  const { setCurrentMark, setCurrentItems } = useMarkStore();
+  const { setCurrentMark, setCurrentItems, storeItems } = useMarkStore();
   const [hoveredMilestone, setHoveredMilestone] = useState<number | null>(null);
 
   const handleMilestoneHover = (milestone: number) => {
     setCurrentMark(milestone);
     const milestoneIndex = milestones.indexOf(milestone);
-    setCurrentItems(defaultItems[milestoneIndex]);
+    if (storeItems && storeItems[milestoneIndex]) {
+      setCurrentItems(storeItems[milestoneIndex]);
+    }
     setHoveredMilestone(milestone);
   };
 
@@ -32,7 +34,7 @@ export default function MilestoneBar({
       ></div>
 
       {milestones.map((milestone, index) => {
-        const progressPercentage = (milestone / 200) * 100; // Convert milestone to percentage of total (200)
+        const progressPercentage = (milestone / 200) * 100;
         const isUnlocked = reward >= milestone;
 
         return (

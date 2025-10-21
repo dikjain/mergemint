@@ -43,7 +43,7 @@ export type GitHubOrgData = {
 };
 
 export type PRRecord = {
-  id: string;
+  id: number;
   created_at: string;
   user_id: string;
   repo_name: string;
@@ -79,6 +79,17 @@ export type AuthSession = {
   access_token: string;
   refresh_token: string;
   expires_at: number;
+};
+
+export type BackendStoreItem = {
+  id: string;
+  created_at: string;
+  image: string;
+  name: string;
+  description: string;
+  cost: string;
+  video: string | null;
+  worth: string;
 };
 
 export type Database = {
