@@ -92,36 +92,55 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
    * Handles the redemption process
    */
   const handleRedeem = async () => {
+    console.log('🔵 Redeem button clicked');
+    console.log('  Item:', item.title, '(ID:', item.id, ')');
+    console.log('  Cost:', item.cost, 'MM');
+
     // Check if wallet is connected
     if (!connected || !publicKey) {
+      console.warn('⚠️ Wallet not connected');
       toast.error('Please connect your wallet first');
       setVisible(true);
       return;
     }
+    console.log('✅ Wallet connected:', publicKey.toString());
 
     // Check if user is authenticated
     if (!user || !userDetails) {
+      console.error('❌ User not authenticated');
+      console.log('  User:', user);
+      console.log('  UserDetails:', userDetails);
       toast.error('Please log in to redeem items');
       return;
     }
+    console.log('✅ User authenticated:', user.email || user.id);
+    console.log('  User points:', userDetails.ipr_count);
 
     // Check if user has sufficient points
     if (!userDetails.ipr_count || userDetails.ipr_count < item.cost) {
+      console.warn('⚠️ Insufficient points');
+      console.log(
+        `  Need: ${item.cost} MM, Have: ${userDetails.ipr_count || 0} MM`
+      );
       toast.error(
         `Insufficient points. You need ${item.cost} MM but have ${userDetails.ipr_count || 0} MM`
       );
       return;
     }
+    console.log('✅ Sufficient points');
 
     // Prevent double submission
     if (isRedeeming) {
+      console.warn('⚠️ Already redeeming, ignoring click');
       return;
     }
 
+    console.log('🚀 Starting redemption process...');
     setIsRedeeming(true);
 
     // Generate idempotency key
     const idempotencyKey = generateIdempotencyKey();
+    console.log('🔑 Idempotency key:', idempotencyKey);
 
     // Show loading toast
     const loadingToast = toast.loading('Processing redemption...', {
@@ -130,6 +149,7 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
 
     try {
       // Call the edge function
+      console.log('📞 Calling redeemStoreItem API...');
       const response = await redeemStoreItem({
         user_id: user.id,
         item_id: item.id,
@@ -137,11 +157,15 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
         idempotency_key: idempotencyKey,
       });
 
+      console.log('📥 Received response from API');
+      console.log('  Response:', response);
+
       // Dismiss loading toast
       toast.dismiss(loadingToast);
 
       // Handle response
       if (response.error) {
+        console.error('❌ Response contains error:', response.error);
         // Check for specific error messages
         if (response.error.includes('insufficient points')) {
           toast.error('Insufficient Points', {
@@ -162,6 +186,8 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
         }
       } else if (response.success && response.tx) {
         // Success!
+        console.log('✅ Redemption successful!');
+        console.log('  TX:', response.tx);
         toast.success('Redemption Successful! 🎉', {
           description: (
             <div className="flex flex-col gap-1">
@@ -183,6 +209,7 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
         // You can call a refresh function here if available
       } else if (response.result) {
         // Idempotent response - already processed
+        console.log('ℹ️ Idempotent response:', response.result.status);
         if (response.result.status === 'success') {
           toast.info('Already Redeemed', {
             description: 'This redemption was already processed successfully',
@@ -197,13 +224,19 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
           });
         }
       } else {
+        console.error('❌ Unknown response format:', response);
         toast.error('Unknown Response', {
           description: 'Unexpected response from server',
         });
       }
     } catch (error) {
       toast.dismiss(loadingToast);
-      console.error('Redemption error:', error);
+      console.error('❌ Caught exception during redemption:');
+      console.error('  Error:', error);
+      console.error(
+        '  Stack:',
+        error instanceof Error ? error.stack : 'No stack'
+      );
       toast.error('Redemption Failed', {
         description:
           error instanceof Error
@@ -211,6 +244,7 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
             : 'An unexpected error occurred',
       });
     } finally {
+      console.log('🏁 Redemption process complete, resetting state');
       setIsRedeeming(false);
     }
   };
