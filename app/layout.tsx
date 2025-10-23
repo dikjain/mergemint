@@ -50,7 +50,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${exo2.variable} ${bitcountSingle.variable} h-screen w-full antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${exo2.variable} ${bitcountSingle.variable}  h-screen w-full antialiased`}
       >
         <SolanaProvider>{children}</SolanaProvider>
         <Toaster position="top-right" richColors />

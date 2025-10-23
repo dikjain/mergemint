@@ -25,7 +25,7 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
 
   // Get user from auth store
-  const { user, userDetails } = useAuthStore();
+  const { user, userDetails, refreshSession } = useAuthStore();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -189,11 +189,24 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
         // Success!
         console.log('✅ Redemption successful!');
         console.log('  TX:', response.tx);
+
+        // Refresh user data to update points balance
+        console.log('🔄 Refreshing user session to update points...');
+        await refreshSession();
+        console.log('✅ User session refreshed');
+
+        // Get updated balance from auth store
+        const updatedDetails = useAuthStore.getState().userDetails;
+        const newBalance = updatedDetails?.ipr_count || 0;
+
         toast.success('Redemption Successful! 🎉', {
           description: (
             <div className="flex flex-col gap-1">
               <p>Your item has been redeemed successfully!</p>
-              <p className="text-xs font-mono text-neutral-600 truncate">
+              <p className="text-xs text-neutral-600">
+                {item.cost} MM points deducted. New balance: {newBalance} MM
+              </p>
+              <p className="text-xs font-mono text-neutral-500 truncate">
                 TX: {response.tx.slice(0, 8)}...{response.tx.slice(-8)}
               </p>
             </div>
@@ -205,9 +218,6 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
         setTimeout(() => {
           setIsDialogOpen(false);
         }, 2000);
-
-        // Optionally refresh user data to update points
-        // You can call a refresh function here if available
       } else if (response.result) {
         // Idempotent response - already processed
         console.log('ℹ️ Idempotent response:', response.result.status);

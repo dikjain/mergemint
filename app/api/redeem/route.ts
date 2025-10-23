@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  SystemProgram,
-} from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import {
   getOrCreateAssociatedTokenAccount,
   createTransferInstruction,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
-// Initialize Supabase with service role (has elevated permissions)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
@@ -23,7 +16,6 @@ const supabase = createClient(supabaseUrl, supabaseServiceRole, {
   },
 });
 
-// Solana configuration
 const SOLANA_RPC = process.env.SOLANA_RPC || 'https://api.devnet.solana.com';
 const TOKEN_MINT = process.env.TOKEN_MINT!;
 const TREASURY_KEY_JSON = process.env.TREASURY_KEY_JSON!;
@@ -34,9 +26,6 @@ const treasury = Keypair.fromSecretKey(
 );
 const TOKEN_MINT_PUB = new PublicKey(TOKEN_MINT);
 
-/**
- * Helper function for JSON responses
- */
 function jsonResponse(data: any, status = 200) {
   return NextResponse.json(data, { status });
 }
@@ -45,13 +34,11 @@ export async function POST(request: NextRequest) {
   console.log('🔵 [API] Redemption request received');
 
   try {
-    // Parse request body
     const body = await request.json();
     console.log('📦 [API] Request body:', body);
 
     const { user_id, item_id, user_wallet, idempotency_key } = body;
 
-    // Validate required parameters
     if (!user_id || !item_id || !user_wallet) {
       console.error('❌ [API] Missing required parameters');
       return jsonResponse(
@@ -62,13 +49,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate idempotency key if not provided
     const finalIdempotencyKey =
       idempotency_key || `${Date.now()}-${crypto.randomUUID()}`;
 
     console.log('🔑 [API] Idempotency key:', finalIdempotencyKey);
 
-    // 1) Check if redemption already exists (idempotency)
     console.log('🔍 [API] Checking for existing redemption...');
     const { data: existing, error: existingError } = await supabase
       .from('redemptions')
@@ -89,7 +74,6 @@ export async function POST(request: NextRequest) {
       return jsonResponse({ result: existing });
     }
 
-    // 2) Fetch item and user from database
     console.log('📥 [API] Fetching item and user data...');
     const [itemResult, userResult] = await Promise.all([
       supabase.from('store_item').select('*').eq('id', item_id).maybeSingle(),
@@ -120,7 +104,6 @@ export async function POST(request: NextRequest) {
     console.log('✅ [API] Item found:', item.name);
     console.log('✅ [API] User found:', user.github_username);
 
-    // Parse numeric fields
     const costPoints = Number(item.cost);
     const worthUsdc = Number(item.worth);
 
@@ -135,7 +118,6 @@ export async function POST(request: NextRequest) {
       return jsonResponse({ error: 'invalid item worth' }, 400);
     }
 
-    // 3) Deduct points using stored procedure
     console.log('💳 [API] Deducting points...');
     const { data: deductResult, error: deductError } = await supabase.rpc(
       'deduct_ipr',
@@ -157,7 +139,6 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [API] Points deducted, remaining:', deductResult);
 
-    // 4) Create pending redemption record
     console.log('📝 [API] Creating pending redemption record...');
     const { data: pending, error: pendingError } = await supabase
       .from('redemptions')
@@ -175,7 +156,6 @@ export async function POST(request: NextRequest) {
     if (pendingError || !pending) {
       console.error('❌ [API] Failed to create pending record:', pendingError);
 
-      // Refund points
       console.log('🔄 [API] Refunding points...');
       await supabase.rpc('refund_ipr', {
         p_user: user_id,
@@ -187,13 +167,11 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [API] Pending record created:', pending.id);
 
-    // 5) Perform on-chain transfer
     console.log('⛓️ [API] Starting on-chain transfer...');
     try {
       const toPublicKey = new PublicKey(user_wallet);
       console.log('📍 [API] Recipient wallet:', toPublicKey.toString());
 
-      // Get or create associated token accounts
       console.log('🔗 [API] Getting token accounts...');
       const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
         connection,
@@ -215,11 +193,9 @@ export async function POST(request: NextRequest) {
       );
       console.log('✅ [API] To account:', toTokenAccount.address.toString());
 
-      // Calculate amount in smallest units (assuming 6 decimals)
       const amountUnits = Math.round(worthUsdc * 10 ** 6);
       console.log('💵 [API] Transfer amount:', amountUnits, 'units');
 
-      // Create and send transaction
       const transaction = new Transaction().add(
         createTransferInstruction(
           fromTokenAccount.address,
@@ -241,7 +217,6 @@ export async function POST(request: NextRequest) {
 
       console.log('✅ [API] Transaction confirmed:', txSignature);
 
-      // 6) Update redemption status and create user_items record
       console.log('📝 [API] Updating records...');
 
       const [userItemResult, updateResult] = await Promise.all([
@@ -281,7 +256,6 @@ export async function POST(request: NextRequest) {
     } catch (onchainError) {
       console.error('❌ [API] On-chain transfer failed:', onchainError);
 
-      // Mark redemption as failed
       await supabase
         .from('redemptions')
         .update({
@@ -290,7 +264,6 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', pending.id);
 
-      // Refund points
       console.log('🔄 [API] Refunding points due to transfer failure...');
       const { error: refundError } = await supabase.rpc('refund_ipr', {
         p_user: user_id,
