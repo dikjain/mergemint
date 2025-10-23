@@ -1,10 +1,7 @@
-import { supabase } from '@/lib/supabase';
-
 /**
- * Supabase edge function URL for redemption
+ * Next.js API route for redemption
  */
-const REDEEM_FUNCTION_URL =
-  'https://uvhydsbazjxqaaijmvhr.supabase.co/functions/v1/redeem';
+const REDEEM_API_URL = '/api/redeem';
 
 /**
  * Request payload for redemption
@@ -17,7 +14,7 @@ export interface RedeemRequest {
 }
 
 /**
- * Response from the redemption edge function
+ * Response from the redemption API
  */
 export interface RedeemResponse {
   success?: boolean;
@@ -33,7 +30,7 @@ export interface RedeemResponse {
 }
 
 /**
- * Calls the Supabase edge function to redeem a store item
+ * Calls the Next.js API route to redeem a store item
  *
  * @param params - Redemption parameters
  * @returns Response with transaction details or error
@@ -51,42 +48,21 @@ export async function redeemStoreItem(
   });
 
   try {
-    // Get the current session for authentication
-    console.log('🔐 Checking authentication...');
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      console.error('❌ No active session found');
-      return { error: 'Not authenticated' };
-    }
-
-    console.log('✅ Session found:', {
-      user: session.user?.email,
-      expires_at: session.expires_at,
-    });
-
-    // Prepare request
-    const requestBody = JSON.stringify(params);
-    console.log('📤 Sending request to:', REDEEM_FUNCTION_URL);
-    console.log('📤 Request body:', requestBody);
-
-    // Call the edge function directly via fetch
-    const response = await fetch(REDEEM_FUNCTION_URL, {
+    // Call Next.js API route
+    console.log('📤 Sending request to:', REDEEM_API_URL);
+    const response = await fetch(REDEEM_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
       },
-      body: requestBody,
+      body: JSON.stringify(params),
     });
 
     console.log('📥 Response status:', response.status, response.statusText);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Edge function HTTP error:');
+      console.error('❌ API HTTP error:');
       console.error('  Status:', response.status);
       console.error('  Status Text:', response.statusText);
       console.error('  Response body:', errorText);
@@ -108,22 +84,10 @@ export async function redeemStoreItem(
       }
     }
 
-    const responseText = await response.text();
-    console.log('📥 Raw response:', responseText);
+    const data: RedeemResponse = await response.json();
+    console.log('✅ Parsed response:', data);
 
-    let data: RedeemResponse;
-    try {
-      data = JSON.parse(responseText);
-      console.log('✅ Parsed response:', data);
-    } catch (parseError) {
-      console.error('❌ Failed to parse response as JSON:', parseError);
-      console.error('  Raw response:', responseText);
-      return {
-        error: 'Invalid response format from server',
-      };
-    }
-
-    // Log success or error from the edge function
+    // Log success or error
     if (data.success) {
       console.log('🎉 Redemption successful!');
       console.log('  Transaction hash:', data.tx);
