@@ -452,7 +452,7 @@ export const StoreItemCard = ({
                 </span>
                 <div className="flex items-center gap-1.5 bg-neutral-200/50 px-2 py-1.5 rounded-md shadow-[0px_2px_0px_#00000020]">
                   <span className="text-base font-bitcount-single text-neutral-800">
-                    {0.0032}
+                    {solPrice ? (item.solana / solPrice).toFixed(2) : '0.00'}
                   </span>
                   <img
                     src="/images/solanaLogoMark.svg"
