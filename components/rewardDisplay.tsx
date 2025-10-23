@@ -2,21 +2,23 @@ import { useMarkStore } from '@/app/store/store';
 import PixelBlast from './PixelBlast';
 import MilestoneBar from './MilestoneBar';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
 
 export default function RewardDisplay({ reward }: { reward: number }) {
-  const { currentItems, storeItems } = useMarkStore();
-  const [milestones, setMilestones] = useState<number[]>([0]);
+  const { currentItems, storeItems, setStoreItems } = useMarkStore();
 
-  useEffect(() => {
-    if (storeItems.length > 0) {
-      // Extract costs from store items and sort them
-      const costs = storeItems.map((item) => item.cost).sort((a, b) => a - b);
-      // Add 0 at the start and create unique sorted milestones
-      const uniqueCosts = [0, ...Array.from(new Set(costs))];
-      setMilestones(uniqueCosts);
-    }
-  }, [storeItems]);
+  // Sort items by required MM cost ascending (10, 20, ...)
+  const sortedItems = [...storeItems].sort((a, b) => a.cost - b.cost);
+
+  // If order differs, update store to keep index mapping consistent for MilestoneBar
+  if (
+    storeItems.length > 0 &&
+    sortedItems.some((item, idx) => item.layoutId !== storeItems[idx].layoutId)
+  ) {
+    setStoreItems(sortedItems);
+  }
+
+  // Milestones array derived from costs (ensure 0 at start for bar)
+  const milestones = [0, ...sortedItems.map((item) => item.cost)];
 
   return (
     <div
@@ -78,7 +80,7 @@ export default function RewardDisplay({ reward }: { reward: number }) {
           transparent
         />
 
-        {storeItems.map((item) => (
+        {sortedItems.map((item) => (
           <motion.div
             key={item.layoutId}
             animate={{

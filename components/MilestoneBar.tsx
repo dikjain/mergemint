@@ -30,11 +30,17 @@ export default function MilestoneBar({
     >
       <div
         className="absolute top-0 left-0 bg-neutral-500 h-full rounded-full"
-        style={{ width: `${Math.min((reward / 200) * 100, 100)}%` }}
+        style={{
+          width: `${Math.min(
+            (reward / (milestones[milestones.length - 1] || 1)) * 100,
+            100
+          )}%`,
+        }}
       ></div>
 
       {milestones.map((milestone, index) => {
-        const progressPercentage = (milestone / 200) * 100;
+        const progressPercentage =
+          (milestone / (milestones[milestones.length - 1] || 1)) * 100;
         const isUnlocked = reward >= milestone;
 
         return (
