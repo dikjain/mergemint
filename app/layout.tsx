@@ -53,18 +53,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${exo2.variable} ${bitcountSingle.variable}  h-screen w-full antialiased`}
       >
         <SolanaProvider>{children}</SolanaProvider>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: '#fafafa',
-              color: '#262626',
-              border: '1px solid #e5e5e5',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            },
-            className: 'font-exo-2',
-          }}
-        />
+        <Toaster position="top-right" richColors />
         <Analytics />
       </body>
     </html>

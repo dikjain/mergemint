@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Sidebar from '../../../components/Sidebar';
 import UserProfile from '../../../components/UserProfile';
 import { StoreItemCard } from '../../../components/StoreItemCard';
-import { fetchStoreItems } from '../../../api/apiExporter';
+import { fetchStoreItems, fetchUserItems } from '../../../api/apiExporter';
 import { useGitHubAuth } from '../../../hooks/useGitHubAuth';
 import { useMarkStore } from '@/app/store/store';
 import { useAuthStore } from '@/app/store/authStore';
@@ -15,12 +15,23 @@ export default function StorePage() {
   const { user, userDetails, fetchSession } = useAuthStore();
   const [renderHeight, setRenderHeight] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [ownedItemIds, setOwnedItemIds] = useState<number[]>([]);
   const { storeItems, setStoreItems } = useMarkStore();
   const screenRef = useRef<HTMLDivElement>(null!);
 
   useEffect(() => {
     fetchSession();
   }, [fetchSession]);
+
+  useEffect(() => {
+    const loadOwnedItems = async () => {
+      if (user?.id) {
+        const items = await fetchUserItems(user.id);
+        setOwnedItemIds(items);
+      }
+    };
+    loadOwnedItems();
+  }, [user?.id]);
 
   useEffect(() => {
     const loadStoreItems = async () => {
@@ -128,7 +139,11 @@ export default function StorePage() {
                     </div>
                   )}
                   {storeItems.map((item) => (
-                    <StoreItemCard key={item.layoutId} item={item} />
+                    <StoreItemCard
+                      key={item.layoutId}
+                      item={item}
+                      isOwned={ownedItemIds.includes(item.id)}
+                    />
                   ))}
                 </div>
               </>

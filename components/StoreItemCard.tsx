@@ -10,7 +10,13 @@ import { toast } from 'sonner';
 import { redeemStoreItem, generateIdempotencyKey } from '@/api/redeem';
 import { useAuthStore } from '@/app/store/authStore';
 
-export const StoreItemCard = ({ item }: { item: StoreItem }) => {
+export const StoreItemCard = ({
+  item,
+  isOwned = false,
+}: {
+  item: StoreItem;
+  isOwned?: boolean;
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const dialogVideoRef = useRef<HTMLVideoElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -96,6 +102,14 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
     console.log('  Item:', item.title);
     console.log('  Item ID:', item.id, '(type:', typeof item.id, ')');
     console.log('  Cost:', item.cost, 'MM');
+
+    // Check if already owned
+    if (isOwned) {
+      toast.info('Already Owned', {
+        description: 'You already own this item!',
+      });
+      return;
+    }
 
     // Check if wallet is connected
     if (!connected || !publicKey) {
@@ -199,17 +213,15 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
         const updatedDetails = useAuthStore.getState().userDetails;
         const newBalance = updatedDetails?.ipr_count || 0;
 
-        toast.success('Redemption Successful', {
+        toast.success('Redemption Successful! 🎉', {
           description: (
             <div className="flex flex-col gap-1">
-              <p className="text-sm text-neutral-700">
-                Item redeemed successfully
+              <p>Your item has been redeemed successfully!</p>
+              <p className="text-xs text-neutral-600">
+                {item.cost} MM points deducted. New balance: {newBalance} MM
               </p>
-              <p className="text-xs text-neutral-500">
-                {item.cost} MM deducted • Balance: {newBalance} MM
-              </p>
-              <p className="text-xs font-mono text-neutral-400 truncate">
-                {response.tx.slice(0, 8)}...{response.tx.slice(-8)}
+              <p className="text-xs font-mono text-neutral-500 truncate">
+                TX: {response.tx.slice(0, 8)}...{response.tx.slice(-8)}
               </p>
             </div>
           ),
@@ -635,21 +647,41 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
 
             <button
               onClick={handleRedeem}
-              disabled={isRedeeming}
+              disabled={isRedeeming || isOwned}
               style={{
                 boxShadow: connected
                   ? '0px 3px 0px #00000040'
                   : '0px 3px 0px #00000040',
               }}
               className={`w-full py-2.5 ${
-                isRedeeming
-                  ? 'bg-neutral-600 cursor-not-allowed'
-                  : connected
-                    ? 'bg-neutral-800 hover:bg-neutral-900'
-                    : 'bg-neutral-700 hover:bg-neutral-800'
-              } text-white rounded-md font-exo-2 font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-150 ${!isRedeeming && 'active:translate-y-[1px] active:shadow-[0px_2px_0px_#00000040]'} disabled:opacity-70`}
+                isOwned
+                  ? 'bg-green-600 cursor-not-allowed'
+                  : isRedeeming
+                    ? 'bg-neutral-600 cursor-not-allowed'
+                    : connected
+                      ? 'bg-neutral-800 hover:bg-neutral-900'
+                      : 'bg-neutral-700 hover:bg-neutral-800'
+              } text-white rounded-md font-exo-2 font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-150 ${!isRedeeming && !isOwned && 'active:translate-y-[1px] active:shadow-[0px_2px_0px_#00000040]'} disabled:opacity-70`}
             >
-              {isRedeeming ? (
+              {isOwned ? (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                  </svg>
+                  Already Owned
+                </>
+              ) : isRedeeming ? (
                 <>
                   <svg
                     className="animate-spin h-4 w-4 text-white"
