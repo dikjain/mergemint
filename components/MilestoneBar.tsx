@@ -11,9 +11,9 @@ export default function MilestoneBar({
 
   const handleMilestoneHover = (milestone: number) => {
     setCurrentMark(milestone);
-    const milestoneIndex = milestones.indexOf(milestone);
-    if (storeItems && storeItems[milestoneIndex]) {
-      setCurrentItems(storeItems[milestoneIndex]);
+    if (storeItems) {
+      const matched = storeItems.find((item) => item.cost === milestone);
+      setCurrentItems(matched ?? null);
     }
     setHoveredMilestone(milestone);
   };
@@ -31,16 +31,13 @@ export default function MilestoneBar({
       <div
         className="absolute top-0 left-0 bg-neutral-500 h-full rounded-full"
         style={{
-          width: `${Math.min(
-            (reward / (milestones[milestones.length - 1] || 1)) * 100,
-            100
-          )}%`,
+          width: `${Math.min((reward / Math.max(...milestones)) * 100, 100)}%`,
         }}
       ></div>
 
       {milestones.map((milestone, index) => {
-        const progressPercentage =
-          (milestone / (milestones[milestones.length - 1] || 1)) * 100;
+        const maxMilestone = Math.max(...milestones);
+        const progressPercentage = (milestone / maxMilestone) * 100;
         const isUnlocked = reward >= milestone;
 
         return (

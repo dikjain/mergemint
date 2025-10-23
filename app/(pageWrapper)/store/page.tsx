@@ -42,8 +42,9 @@ export default function StorePage() {
       if (response.success && response.data) {
         const transformedItems = transformBackendStoreItems(response.data);
         console.log('Transformed items:', transformedItems);
-        // Reverse to show newest items first
-        setStoreItems(transformedItems.reverse());
+        // Sort by worth (highest to lowest)
+        const sorted = transformedItems.sort((a, b) => b.solana - a.solana);
+        setStoreItems(sorted);
       } else {
         console.error('Failed to load store items:', response.error);
       }

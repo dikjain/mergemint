@@ -9,6 +9,7 @@ import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { toast } from 'sonner';
 import { redeemStoreItem, generateIdempotencyKey } from '@/api/redeem';
 import { useAuthStore } from '@/app/store/authStore';
+import { useSolPrice } from '@/utils/useSolPrice';
 
 export const StoreItemCard = ({
   item,
@@ -32,6 +33,8 @@ export const StoreItemCard = ({
 
   // Get user from auth store
   const { user, userDetails, refreshSession } = useAuthStore();
+
+  const solPrice = useSolPrice();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -341,13 +344,17 @@ export const StoreItemCard = ({
               style={{ fontSize: 16, lineHeight: 20 }}
               className=" text-white/80 font-bitcount-single flex  items-center justify-center gap-1 h-full"
             >
-              {item.solana}
-              <img
-                src="/images/solanaLogoMark.svg"
-                alt="solana"
-                style={{ filter: 'drop-shadow(0px 1px 0px #00000050)' }}
-                className="h-3"
-              />
+              {solPrice && (
+                <>
+                  {(item.solana / solPrice).toFixed(2)}
+                  <img
+                    src="/images/solanaLogoMark.svg"
+                    alt="sol"
+                    style={{ filter: 'drop-shadow(0px 1px 0px #00000050)' }}
+                    className="h-3 inline-block ml-0.5"
+                  />
+                </>
+              )}
             </p>
           </div>
 

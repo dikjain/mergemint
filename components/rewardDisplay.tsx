@@ -1,24 +1,56 @@
 import { useMarkStore } from '@/app/store/store';
+import { fetchStoreItems } from '@/api/apiExporter';
+import { transformBackendStoreItems } from '@/utils/storeTransformers';
 import PixelBlast from './PixelBlast';
 import MilestoneBar from './MilestoneBar';
 import { motion } from 'framer-motion';
+import { useMemo, useEffect, useState } from 'react';
 
 export default function RewardDisplay({ reward }: { reward: number }) {
   const { currentItems, storeItems, setStoreItems } = useMarkStore();
 
-  // Sort items by required MM cost ascending (10, 20, ...)
-  const sortedItems = [...storeItems].sort((a, b) => a.cost - b.cost);
+  // Ensure store items are loaded (handles direct dashboard visit)
+  useEffect(() => {
+    const load = async () => {
+      if (storeItems.length === 0) {
+        const res = await fetchStoreItems();
+        if (res.success && res.data) {
+          setStoreItems(transformBackendStoreItems(res.data));
+        }
+      }
+    };
+    load();
+  }, []);
 
-  // If order differs, update store to keep index mapping consistent for MilestoneBar
-  if (
-    storeItems.length > 0 &&
-    sortedItems.some((item, idx) => item.layoutId !== storeItems[idx].layoutId)
-  ) {
-    setStoreItems(sortedItems);
-  }
+  const [solPrice, setSolPrice] = useState<number | null>(null);
 
-  // Milestones array derived from costs (ensure 0 at start for bar)
-  const milestones = [0, ...sortedItems.map((item) => item.cost)];
+  // Fetch current SOL->USD price once
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const res = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'
+        );
+        const json = await res.json();
+        if (json.solana && json.solana.usd) {
+          setSolPrice(json.solana.usd);
+        }
+      } catch (e) {
+        console.error('Failed to fetch SOL price', e);
+      }
+    };
+    fetchPrice();
+  }, []);
+
+  // Build milestones array based on item cost sorted ascending
+  const milestones = useMemo(() => {
+    if (!storeItems || storeItems.length === 0) return [];
+    const sortedCosts = [...storeItems]
+      .map((item) => item.cost)
+      .filter((v, i, arr) => arr.indexOf(v) === i) // unique
+      .sort((a, b) => a - b);
+    return [...sortedCosts];
+  }, [storeItems]);
 
   return (
     <div
@@ -57,7 +89,12 @@ export default function RewardDisplay({ reward }: { reward: number }) {
               {currentItems.description}
             </p>
             <p className="text-md font-bitcount-single font-medium text-neutral-700">
-              {currentItems.solana} SOL
+              ${currentItems.solana} USD
+              {solPrice && (
+                <span className="ml-2 text-neutral-500">
+                  / {(currentItems.solana / solPrice).toFixed(2)} SOL
+                </span>
+              )}
             </p>
           </motion.div>
         </div>
@@ -80,7 +117,7 @@ export default function RewardDisplay({ reward }: { reward: number }) {
           transparent
         />
 
-        {sortedItems.map((item) => (
+        {storeItems.map((item) => (
           <motion.div
             key={item.layoutId}
             animate={{
