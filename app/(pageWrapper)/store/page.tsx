@@ -42,7 +42,8 @@ export default function StorePage() {
       if (response.success && response.data) {
         const transformedItems = transformBackendStoreItems(response.data);
         console.log('Transformed items:', transformedItems);
-        setStoreItems(transformedItems);
+        // Reverse to show newest items first
+        setStoreItems(transformedItems.reverse());
       } else {
         console.error('Failed to load store items:', response.error);
       }
