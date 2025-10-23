@@ -199,15 +199,17 @@ export const StoreItemCard = ({ item }: { item: StoreItem }) => {
         const updatedDetails = useAuthStore.getState().userDetails;
         const newBalance = updatedDetails?.ipr_count || 0;
 
-        toast.success('Redemption Successful! 🎉', {
+        toast.success('Redemption Successful', {
           description: (
             <div className="flex flex-col gap-1">
-              <p>Your item has been redeemed successfully!</p>
-              <p className="text-xs text-neutral-600">
-                {item.cost} MM points deducted. New balance: {newBalance} MM
+              <p className="text-sm text-neutral-700">
+                Item redeemed successfully
               </p>
-              <p className="text-xs font-mono text-neutral-500 truncate">
-                TX: {response.tx.slice(0, 8)}...{response.tx.slice(-8)}
+              <p className="text-xs text-neutral-500">
+                {item.cost} MM deducted • Balance: {newBalance} MM
+              </p>
+              <p className="text-xs font-mono text-neutral-400 truncate">
+                {response.tx.slice(0, 8)}...{response.tx.slice(-8)}
               </p>
             </div>
           ),
