@@ -1,49 +1,8 @@
-/**
- * GitHub Authentication Hook
- *
- * Handles GitHub OAuth login via Supabase with admin privilege verification.
- * Provides authentication for both regular users and company/org admins.
- */
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
-import { getCurrentSession } from '../api/apiExporter';
-
-// Types for GitHub API responses
-interface GitHubOrgMembership {
-  organization: {
-    login: string;
-    id: number;
-  };
-  state: 'active' | 'pending';
-  role: 'admin' | 'member';
-}
-
-interface GitHubRepo {
-  id: number;
-  name: string;
-  full_name: string;
-  description: string | null;
-  owner: {
-    login: string;
-    avatar_url: string;
-  };
-  permissions?: {
-    admin: boolean;
-    push: boolean;
-    pull: boolean;
-  };
-  private: boolean;
-}
-
-interface UserGitHubData {
-  githubId: string;
-  githubUsername: string;
-  token: string;
-  email?: string;
-  avatarUrl?: string;
-}
+import { getCurrentSession, storeGitHubData } from '../api/apiExporter';
+import type { GitHubOrgMembership, GitHubRepo, UserGitHubData } from '@/types';
 
 export const useGitHubAuth = () => {
   const router = useRouter();
@@ -56,9 +15,6 @@ export const useGitHubAuth = () => {
     checkSession();
   }, []);
 
-  /**
-   * Check for existing session and extract GitHub data
-   */
   const checkSession = async () => {
     try {
       const {
@@ -78,6 +34,14 @@ export const useGitHubAuth = () => {
           avatarUrl: user.user_metadata?.avatar_url,
         };
         setUserData(githubData);
+
+        if (
+          session.provider_token &&
+          !window.location.pathname.includes('/company') &&
+          !window.location.pathname.includes('/store')
+        ) {
+          await storeGitHubData(session.provider_token, user.id, false);
+        }
       }
     } catch (err) {
       console.error('Session check error:', err);
@@ -102,12 +66,10 @@ export const useGitHubAuth = () => {
         return;
       }
 
-      // Define OAuth scopes based on login type
       const scopes = isCompanyLogin
         ? 'read:user user:email read:org repo'
         : 'read:user user:email';
 
-      // Initiate OAuth flow
       const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
@@ -158,10 +120,8 @@ export const useGitHubAuth = () => {
 
       const membership: GitHubOrgMembership = await response.json();
 
-      // User must be an active admin
       const isAdmin =
         membership.state === 'active' && membership.role === 'admin';
-
       if (!isAdmin) {
         return {
           isAdmin: false,
@@ -179,11 +139,6 @@ export const useGitHubAuth = () => {
     }
   };
 
-  /**
-   * Fetch all repositories where user has admin access
-   * @param token - GitHub access token
-   * @returns Array of repositories or null if error
-   */
   const fetchAdminRepos = async (
     token: string
   ): Promise<GitHubRepo[] | null> => {
@@ -204,12 +159,9 @@ export const useGitHubAuth = () => {
       }
 
       const repos: GitHubRepo[] = await response.json();
-
-      // Filter only repos where user has admin access
       const adminRepos = repos.filter(
         (repo) => repo.permissions?.admin === true
       );
-
       return adminRepos;
     } catch (err) {
       console.error('Error fetching admin repos:', err);
@@ -217,11 +169,6 @@ export const useGitHubAuth = () => {
     }
   };
 
-  /**
-   * Fetch user's organizations where they have admin role
-   * @param token - GitHub access token
-   * @returns Array of organization memberships or null if error
-   */
   const fetchAdminOrgs = async (
     token: string
   ): Promise<GitHubOrgMembership[] | null> => {
@@ -242,13 +189,10 @@ export const useGitHubAuth = () => {
       }
 
       const memberships: GitHubOrgMembership[] = await response.json();
-
-      // Filter only orgs where user is admin
       const adminOrgs = memberships.filter(
         (membership) =>
           membership.state === 'active' && membership.role === 'admin'
       );
-
       return adminOrgs;
     } catch (err) {
       console.error('Error fetching admin orgs:', err);
@@ -271,13 +215,10 @@ export const useGitHubAuth = () => {
   };
 
   return {
-    // State
     isAuthenticating,
     isLoading,
     userData,
     error,
-
-    // Methods
     loginWithGitHub,
     verifyOrgAdmin,
     fetchAdminRepos,

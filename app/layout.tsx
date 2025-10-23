@@ -8,6 +8,9 @@ import {
 } from 'next/font/google';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/next';
+import { SolanaProvider } from '@/components/providers/SolanaProvider';
+import { Toaster } from '@/components/ui/sonner';
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -47,9 +50,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${exo2.variable} ${bitcountSingle.variable} h-screen w-full antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${exo2.variable} ${bitcountSingle.variable}  h-screen w-full antialiased`}
       >
-        {children}
+        <SolanaProvider>{children}</SolanaProvider>
+        <Toaster position="top-right" richColors />
         <Analytics />
       </body>
     </html>

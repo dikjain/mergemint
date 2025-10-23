@@ -8,35 +8,18 @@ import {
   CheckIcon,
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import type { SecretKeyCardProps } from '@/types';
 
-/**
- * Props for SecretKeyCard component
- */
-interface SecretKeyCardProps {
-  /** Secret key to display and copy */
-  secretKey: string;
-  /** Whether user is authenticated */
-  isAuthenticated: boolean;
-}
-
-/**
- * SecretKeyCard Component
- *
- * Second step in company setup: Copy the private secret key
- * Features an animated reveal effect on hover
- */
 export default function SecretKeyCard({
   secretKey,
   isAuthenticated,
+  isLoading = false,
 }: SecretKeyCardProps) {
   const [secretCardHovered, setSecretCardHovered] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  /**
-   * Copy secret key to clipboard
-   */
   const handleCopySecret = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !secretKey) return;
 
     try {
       await navigator.clipboard.writeText(secretKey);
@@ -84,9 +67,13 @@ export default function SecretKeyCard({
       <FollowerPointerCard
         title={
           isAuthenticated
-            ? copied
-              ? 'Copied!'
-              : 'Click to Copy'
+            ? isLoading
+              ? 'Loading...'
+              : copied
+                ? 'Copied!'
+                : secretKey
+                  ? 'Click to Copy'
+                  : 'No secret key'
             : 'Login to unlock'
         }
         className="my-auto"
@@ -98,14 +85,24 @@ export default function SecretKeyCard({
           className="w-64 group relative overflow-hidden flex h-8 bg-neutral-200 rounded-md border border-neutral-200"
         >
           {isAuthenticated ? (
-            <div className="absolute left-1/2 top-1/2 selection:bg-transparent cursor-pointer -translate-y-1/2 -translate-x-1/2 z-[1] font-nunito text-sm font-medium text-neutral-500 flex items-center gap-2">
-              {copied ? (
-                <CheckIcon className="w-4 h-4 text-neutral-500" />
-              ) : (
-                <Square2StackIcon className="w-4 h-4" />
-              )}
-              {copied ? 'Copied!' : secretKey}
-            </div>
+            isLoading ? (
+              <div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 z-[1]">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-neutral-500"></div>
+              </div>
+            ) : secretKey ? (
+              <div className="absolute left-1/2 top-1/2 selection:bg-transparent cursor-pointer -translate-y-1/2 -translate-x-1/2 z-[1] font-nunito text-sm font-medium text-neutral-500 flex items-center gap-2">
+                {copied ? (
+                  <CheckIcon className="w-4 h-4 text-neutral-500" />
+                ) : (
+                  <Square2StackIcon className="w-4 h-4" />
+                )}
+                {copied ? 'Copied!' : secretKey}
+              </div>
+            ) : (
+              <div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 z-[1] font-nunito text-xs font-medium text-neutral-400">
+                No secret key found
+              </div>
+            )
           ) : (
             <LockClosedIcon className="w-4 h-4 text-neutral-400 z-[1] absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2" />
           )}

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Sidebar from '../../../components/Sidebar';
+import BountyRow from '../../../components/BountyRow';
 import { fetchBounties, type Bounty } from '../../../api/apiExporter';
-import { formatReward, formatDate, getBountyStatusBadge } from '../../../utils';
 
 export default function BountiesPage() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
@@ -14,7 +14,7 @@ export default function BountiesPage() {
       try {
         const result = await fetchBounties({
           orderBy: 'created_at',
-          ascending: false
+          ascending: false,
         });
 
         if (!result.success) {
@@ -55,88 +55,48 @@ export default function BountiesPage() {
   return (
     <div className="h-screen bg-white flex w-screen max-w-[1440px]">
       <Sidebar />
-      
-      <section className="w-full h-full bg-white px-8 py-8 flex flex-col gap-4 border-r border-neutral-200">
 
+      <section className="w-full h-full bg-white px-8 py-8 flex flex-col gap-4 border-r border-neutral-200">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-neutral-600 font-exo-2 ">Bounties</h1>
-          {bounties.length > 0 && <div className="text-sm text-neutral-500">
-            {bounties.length} {bounties.length === 1 ? 'bounty' : 'bounties'} available
-          </div>}
+          <h1 className="text-3xl font-bold text-neutral-600 font-exo-2">
+            Bounties
+          </h1>
+          {bounties.length > 0 && (
+            <div className="text-sm text-neutral-500">
+              {bounties.length} {bounties.length === 1 ? 'bounty' : 'bounties'}{' '}
+              available
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {bounties.length === 0 ? (
             <div className="text-center py-12 text-neutral-500">
               <p className="font-medium">No bounties available</p>
-              <p className="text-sm mt-2">Check back later for new opportunities!</p>
+              <p className="text-sm mt-2">
+                Check back later for new opportunities!
+              </p>
             </div>
           ) : (
             <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
-              {/* Table Header */}
-              <div className="grid grid-cols-7 gap-4 p-4 bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-600">
+              <div
+                className="grid gap-4 p-4 bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-600"
+                style={{ gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr' }}
+              >
+                <div>Issue Name</div>
+                <div>Company</div>
                 <div>Repository</div>
                 <div>Issue #</div>
-                <div>Reward</div>
                 <div>Status</div>
-                <div>Company</div>
                 <div>Created</div>
-                <div>Updated</div>
               </div>
 
-              {/* Table Rows */}
               {bounties.map((bounty) => (
-                <div 
-                  key={bounty.id} 
-                  className="grid grid-cols-7 gap-4 p-4 border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer"
-                  onClick={() => handleBountyClick(bounty)}
-                >
-                  {/* Repository Name */}
-                  <div className="font-medium text-neutral-800">
-                    {bounty.repo_name}
-                  </div>
-
-                  {/* Issue Number */}
-                  <div className="text-neutral-600">
-                    #{bounty.issue_number}
-                  </div>
-
-                  {/* Reward */}
-                  <div className="font-semibold text-green-600">
-                    {formatReward(bounty.reward)}
-                  </div>
-
-                  {/* Status */}
-                  <div>
-                    <span className={getBountyStatusBadge(bounty.status)}>
-                      {bounty.status}
-                    </span>
-                  </div>
-
-                  {/* Company */}
-                  <div className="flex items-center gap-2">
-                    {bounty.company_logo && (
-                      <img 
-                        src={bounty.company_logo} 
-                        alt={`${bounty.company_name} logo`}
-                        className="w-5 h-5 rounded object-cover"
-                      />
-                    )}
-                    <span className="text-neutral-600 truncate">
-                      {bounty.company_name || 'N/A'}
-                    </span>
-                  </div>
-
-                  {/* Created Date */}
-                  <div className="text-neutral-500 text-sm">
-                    {formatDate(bounty.created_at)}
-                  </div>
-
-                  {/* Updated Date */}
-                  <div className="text-neutral-500 text-sm">
-                    {formatDate(bounty.updated_at)}
-                  </div>
-                </div>
+                <BountyRow
+                  key={bounty.id}
+                  bounty={bounty}
+                  onClick={handleBountyClick}
+                />
               ))}
             </div>
           )}

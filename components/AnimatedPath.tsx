@@ -1,14 +1,5 @@
 import { motion } from 'framer-motion';
-
-interface AnimatedPathProps {
-  path: string;
-  color: string;
-  gradientId: string;
-  delay: number;
-  horizontalDir: 'ltr' | 'rtl';
-  verticalDir: 'ttb' | 'btt';
-  cardSize: { width: number; height: number };
-}
+import type { AnimatedPathProps } from '@/types';
 
 export default function AnimatedPath({
   path,

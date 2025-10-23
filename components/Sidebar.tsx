@@ -15,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import { useGitHubAuth } from '../hooks/useGitHubAuth';
 
 const navigationItems = (isCompany: boolean) =>
   isCompany
@@ -34,7 +33,8 @@ const navigationItems = (isCompany: boolean) =>
     : [
         { label: 'Dashboard', hasBorder: true, route: '/dashboard' },
         { label: 'Bounties', hasBorder: true, route: '/bounties' },
-        { label: 'Wall of Fame', hasBorder: false, route: '/wall-of-fame' },
+        { label: 'Wall of Fame', hasBorder: true, route: '/wall-of-fame' },
+        { label: 'Store', hasBorder: false, route: '/store' },
         {
           label: 'Logout',
           isRed: true,
@@ -49,7 +49,6 @@ export default function Sidebar({ isCompany }: { isCompany?: boolean }) {
   const router = useRouter();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { userData } = useGitHubAuth();
 
   const handleNavigation = (route: string, label: string) => {
     if (label === 'Logout') {

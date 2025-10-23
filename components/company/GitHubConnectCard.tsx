@@ -1,16 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import SetupCard from '../SetupCard';
 import ConnectButtonAnimations from '../ConnectButtonAnimations';
-
-/**
- * Props for GitHubConnectCard component
- */
-interface GitHubConnectCardProps {
-  /** GitHub user data */
-  userData: any;
-  /** Login handler function */
-  onLogin: () => void;
-}
+import type { GitHubConnectCardProps } from '@/types';
 
 /**
  * GitHubConnectCard Component

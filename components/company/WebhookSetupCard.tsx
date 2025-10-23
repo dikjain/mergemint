@@ -2,17 +2,11 @@ import { useState } from 'react';
 import SetupCard from '../SetupCard';
 import Image from 'next/image';
 import { Square2StackIcon, CheckIcon } from '@heroicons/react/24/outline';
+import type { WebhookConfig, WebhookSetupCardProps } from '@/types';
 
-interface WebhookConfig {
-  id: string;
-  title: string;
-  url: string;
-  events: string;
-  image: string;
-  note?: string;
-}
-
-export default function WebhookSetupCard() {
+export default function WebhookSetupCard({
+  isAuthenticated = false,
+}: WebhookSetupCardProps) {
   const [copiedUrls, setCopiedUrls] = useState<{ [key: string]: boolean }>({});
 
   const webhookData: WebhookConfig[] = [
@@ -36,6 +30,8 @@ export default function WebhookSetupCard() {
   const webhookSettingsUrl = 'https://github.com/{org}/{repo}/settings/hooks';
 
   const handleCopyUrl = async (url: string, id: string) => {
+    if (!isAuthenticated) return;
+
     try {
       await navigator.clipboard.writeText(url);
       setCopiedUrls((prev) => ({ ...prev, [id]: true }));
@@ -45,6 +41,10 @@ export default function WebhookSetupCard() {
     } catch (err) {
       console.error('Failed to copy: ', err);
     }
+  };
+
+  const getDisplayUrl = (url: string) => {
+    return isAuthenticated ? url : '********************';
   };
 
   return (
@@ -78,12 +78,13 @@ export default function WebhookSetupCard() {
                   </span>
                   <div className="flex items-center gap-2 flex-1">
                     <p className="font-mono bg-neutral-50 px-2 py-1 rounded text-neutral-400 break-all mt-1 flex-1">
-                      {webhook.url}
+                      {getDisplayUrl(webhook.url)}
                     </p>
                     <button
                       onClick={() => handleCopyUrl(webhook.url, webhook.id)}
-                      className="p-0.5 hover:bg-neutral-100 rounded transition-colors"
-                      title="Copy URL"
+                      className={`p-0.5 hover:bg-neutral-100 rounded transition-colors ${!isAuthenticated && 'cursor-not-allowed opacity-50'}`}
+                      title={isAuthenticated ? 'Copy URL' : 'Login required'}
+                      disabled={!isAuthenticated}
                     >
                       {copiedUrls[webhook.id] ? (
                         <CheckIcon className="w-4 h-4 text-green-500" />

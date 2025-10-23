@@ -6,16 +6,11 @@ import Sidebar from '../../../components/Sidebar';
 import Card from '../../../components/Card';
 import PRComponent from '../../../components/PRComponent';
 import UserProfile from '../../../components/UserProfile';
-import {
-  getCurrentSession,
-  fetchUserPRs,
-  type User,
-  type UserDetails,
-  type PRRecord,
-} from '../../../api/apiExporter';
+import { fetchUserPRs, type PRRecord } from '../../../api/apiExporter';
 import RewardDisplay from '../../../components/rewardDisplay';
 import NoUserBranding from '../../../components/NoUserBranding';
 import { useGitHubAuth } from '../../../hooks/useGitHubAuth';
+import { useAuthStore } from '@/app/store/authStore';
 import { ArrowUpRightIcon, FaceFrownIcon } from '@heroicons/react/24/outline';
 
 import Link from 'next/link';
@@ -23,27 +18,28 @@ import Link from 'next/link';
 export default function Dashboard() {
   const router = useRouter();
   const { loginWithGitHub, isAuthenticating } = useGitHubAuth();
-  const [user, setUser] = useState<User | null>(null);
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const {
+    user,
+    userDetails,
+    fetchSession,
+    isLoading: authLoading,
+  } = useAuthStore();
   const [prs, setPrs] = useState<PRRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initDashboard = async () => {
+    fetchSession();
+  }, [fetchSession]);
+
+  useEffect(() => {
+    const loadPRs = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        const sessionResult = await getCurrentSession();
-
-        if (!sessionResult.success || !sessionResult.data) {
-          setLoading(false);
-          return;
-        }
-
-        // Session exists, load user data
-        setUser(sessionResult.data.user);
-        setUserDetails(sessionResult.data.userDetails);
-
-        // Fetch user PRs
-        const prsResult = await fetchUserPRs(sessionResult.data.user.id, {
+        const prsResult = await fetchUserPRs(user.id, {
           orderBy: 'created_at',
           ascending: false,
         });
@@ -53,14 +49,15 @@ export default function Dashboard() {
         }
       } catch (error) {
         console.error('Dashboard initialization error:', error);
-        setLoading(false);
       } finally {
         setLoading(false);
       }
     };
 
-    initDashboard();
-  }, [router]);
+    if (!authLoading) {
+      loadPRs();
+    }
+  }, [user, authLoading]);
 
   const handleLogin = async () => {
     await loginWithGitHub('/dashboard', false);
@@ -96,7 +93,7 @@ export default function Dashboard() {
         </div>
 
         <Card height="h-[40%]" width="w-full">
-          <RewardDisplay reward={(userDetails?.ipr_count || 0) * 4 || 0} />
+          <RewardDisplay reward={userDetails?.ipr_count ?? 0} />
         </Card>
 
         <h1 className="text-xl font-bold text-neutral-600 font-nunito">

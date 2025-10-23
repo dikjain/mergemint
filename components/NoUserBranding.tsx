@@ -1,10 +1,9 @@
 'use client';
 import PRComponent from './PRComponent';
-
 import Card from './Card';
-
-import { mockPRs, MockPR } from '../lib/mockData';
 import Image from 'next/image';
+import { mockPRs } from '@/lib/mockData';
+import type { PRRecord } from '@/types';
 
 export default function noUserBranding() {
   return (
@@ -34,7 +33,7 @@ export default function noUserBranding() {
         <div className="bg-white blur-sm inset-0 z-10 absolute rounded-lg mask-[linear-gradient(to_bottom,rgba(0,0,0,0)_0%,rgba(0,0,0,1)_100%)]"></div>
         <div className="rounded-lg overflow-hidden bg-neutral-50 blur-[1px]">
           {mockPRs.map((pr) => (
-            <PRComponent key={pr.id} pr={pr as MockPR} />
+            <PRComponent key={pr.id} pr={pr as PRRecord} />
           ))}
         </div>
       </div>

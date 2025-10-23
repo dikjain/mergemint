@@ -238,14 +238,14 @@ export default function LandingPage() {
               className="px-10 py-5 bg-black text-white rounded-xl font-nunito text-lg font-bold hover:bg-neutral-800 transition-all"
               style={cardShadow}
             >
-              Start Contributing
+              I'm a Developer
             </a>
             <a
               href="/company"
               className="px-10 py-5 bg-white text-black border-2 border-black rounded-xl font-nunito text-lg font-bold hover:bg-neutral-50 transition-all"
               style={cardShadow}
             >
-              List Your Repos
+              I'm a Company
             </a>
           </div>
         </div>
