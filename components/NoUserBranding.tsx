@@ -26,7 +26,7 @@ export default function noUserBranding() {
             className="text-6xl font-bold text-neutral-700 font-nunito"
           >
             MAKE PR,
-            <br /> EARN NFTs
+            <br /> EARN SOLANA
           </h1>
         </div>
 
