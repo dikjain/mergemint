@@ -3,7 +3,6 @@
 <p align="center">
   <em>Gamifying open-source contributions with on-chain rewards</em><br/>
   <a href="https://mergemint.appwrite.network">Live Demo</a> •
-  <a href="https://www.youtube.com/watch?v=u7ycN4Is8Y0">Video Walk-through</a>
 </p>
 
 ---
