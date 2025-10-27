@@ -13,7 +13,7 @@ export default function WebhookSetupCard({
     {
       id: 'issues',
       title: 'Issues Webhook',
-      url: 'https://uvhydsbazjxqaaijmvhr.supabase.co/functions/v1/create-issue',
+      url: 'https://68fb835d0025237e3fd1.nyc.appwrite.run',
       events: 'Issues only',
       image: '/images/issues.png',
       note: "Make sure to add the label 'mergemint' to your issues, otherwise they won't be registered by the system.",
@@ -21,7 +21,7 @@ export default function WebhookSetupCard({
     {
       id: 'pullrequests',
       title: 'Pull Requests Webhook',
-      url: 'https://uvhydsbazjxqaaijmvhr.supabase.co/functions/v1/rapid-action',
+      url: 'https://68fb8bfb003184eee460.nyc.appwrite.run',
       events: 'Pull requests only',
       image: '/images/pullreq.png',
     },
